@@ -1,0 +1,4 @@
+documentos/
+.env
+*.log
+vendor/

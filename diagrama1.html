@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama Entidad-Relación Limpio</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            color: #000000;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 26px;
+            margin-bottom: 20px;
+        }
+
+        .diagram-container {
+            width: 100%;
+            overflow-x: auto;
+            background: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 8px;
+            padding: 20px 0;
+        }
+
+        svg {
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Estilos en Blanco y Negro */
+        .entity {
+            fill: #ffffff;
+            stroke: #000000;
+            stroke-width: 2.5;
+        }
+
+        .entity-text {
+            font-size: 16px;
+            font-weight: bold;
+            fill: #000000;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        .attribute {
+            fill: #ffffff;
+            stroke: #000000;
+            stroke-width: 1.5;
+        }
+
+        .attr-text {
+            font-size: 13px;
+            fill: #000000;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        .pk-text {
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        .card-text {
+            font-size: 15px;
+            font-weight: bold;
+            fill: #000000;
+            text-anchor: middle;
+        }
+
+        .line {
+            stroke: #000000;
+            stroke-width: 2;
+        }
+
+        .relation {
+            fill: #ffffff;
+            stroke: #000000;
+            stroke-width: 2.5;
+        }
+
+        .relation-text {
+            font-size: 14px;
+            font-weight: bold;
+            fill: #000000;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Diagrama Entidad - Relación (Distribución Ampliada)</h1>
+
+    <div class="diagram-container">
+        <svg width="3200" height="2400" viewBox="0 0 3200 2400">
+
+            <!-- ========================================================= -->
+            <!-- 1. BLOQUE SUPERIOR: CARRERA - ESTUDIANTE - ASIGNATURA - DOCENTE -->
+            <!-- ========================================================= -->
+
+            <!-- CARRERA (300, 250) -> Atributos -->
+            <line x1="300" y1="250" x2="120" y2="150" class="line" />
+            <line x1="300" y1="250" x2="120" y2="220" class="line" />
+            <line x1="300" y1="250" x2="120" y2="290" class="line" />
+            <line x1="300" y1="250" x2="120" y2="360" class="line" />
+
+            <!-- CARRERA -> PERTENECE -> ESTUDIANTE -->
+            <line x1="300" y1="250" x2="520" y2="250" class="line" />
+            <line x1="520" y1="250" x2="750" y2="250" class="line" />
+
+            <!-- ESTUDIANTE (750, 250) -> Atributos -->
+            <line x1="750" y1="250" x2="750" y2="100" class="line" />
+            <line x1="750" y1="250" x2="620" y2="100" class="line" />
+            <line x1="750" y1="250" x2="880" y2="100" class="line" />
+            <line x1="750" y1="250" x2="1000" y2="100" class="line" />
+            <line x1="750" y1="250" x2="620" y2="160" class="line" />
+            <line x1="750" y1="250" x2="880" y2="160" class="line" />
+
+            <!-- ESTUDIANTE -> ESTUDIA -> ASIGNATURA -->
+            <line x1="750" y1="250" x2="1100" y2="250" class="line" />
+            <line x1="1100" y1="250" x2="1500" y2="250" class="line" />
+
+            <!-- ASIGNATURA (1500, 250) -> Atributos -->
+            <line x1="1500" y1="250" x2="1350" y2="120" class="line" />
+            <line x1="1500" y1="250" x2="1470" y2="120" class="line" />
+            <line x1="1500" y1="250" x2="1590" y2="120" class="line" />
+            <line x1="1500" y1="250" x2="1710" y2="120" class="line" />
+
+            <!-- ASIGNATURA -> IMPARTE -> DOCENTE -->
+            <line x1="1500" y1="250" x2="1800" y2="250" class="line" />
+            <line x1="1800" y1="250" x2="2100" y2="250" class="line" />
+
+            <!-- DOCENTE (2100, 250) -> Atributos -->
+            <line x1="2100" y1="250" x2="1950" y2="120" class="line" />
+            <line x1="2100" y1="250" x2="2070" y2="120" class="line" />
+            <line x1="2100" y1="250" x2="2190" y2="120" class="line" />
+            <line x1="2100" y1="250" x2="2310" y2="120" class="line" />
+
+            <!-- GESTIÓN ACADÉMICA (2700, 250) -> Atributos -->
+            <line x1="2700" y1="250" x2="2550" y2="120" class="line" />
+            <line x1="2700" y1="250" x2="2670" y2="120" class="line" />
+            <line x1="2700" y1="250" x2="2790" y2="120" class="line" />
+            <line x1="2700" y1="250" x2="2910" y2="120" class="line" />
+
+            <!-- GESTIÓN ACADÉMICA -> CONTIENE -> PRERREQUISITO -->
+            <line x1="2700" y1="250" x2="2700" y2="380" class="line" />
+            <line x1="2700" y1="380" x2="2700" y2="500" class="line" />
+
+            <!-- PRERREQUISITO (2700, 500) -> Atributos -->
+            <line x1="2700" y1="500" x2="2550" y2="580" class="line" />
+            <line x1="2700" y1="500" x2="2700" y2="590" class="line" />
+            <line x1="2700" y1="500" x2="2850" y2="580" class="line" />
+
+
+            <!-- ========================================================= -->
+            <!-- 2. BLOQUE CENTRAL: INSCRIPCIÓN Y PAGOS -->
+            <!-- ========================================================= -->
+
+            <!-- ESTUDIANTE -> INSCRIPCIÓN -->
+            <line x1="750" y1="250" x2="750" y2="700" class="line" />
+
+            <!-- INSCRIPCIÓN (750, 700) -> Atributos -->
+            <line x1="750" y1="700" x2="520" y2="620" class="line" />
+            <line x1="750" y1="700" x2="520" y2="680" class="line" />
+            <line x1="750" y1="700" x2="520" y2="740" class="line" />
+            <line x1="750" y1="700" x2="520" y2="800" class="line" />
+
+            <!-- INSCRIPCIÓN -> REALIZA -> PAGO MATRÍCULA -->
+            <line x1="750" y1="700" x2="520" y2="920" class="line" />
+            <line x1="520" y1="920" x2="300" y2="1100" class="line" />
+
+            <!-- PAGO MATRÍCULA (300, 1100) -> Atributos -->
+            <line x1="300" y1="1100" x2="120" y2="1020" class="line" />
+            <line x1="300" y1="1100" x2="120" y2="1080" class="line" />
+            <line x1="300" y1="1100" x2="120" y2="1140" class="line" />
+            <line x1="300" y1="1100" x2="120" y2="1200" class="line" />
+
+            <!-- SECRETARIA (300, 1400) -> REGISTRA -> PAGO MATRÍCULA -->
+            <line x1="300" y1="1400" x2="300" y2="1270" class="line" />
+            <line x1="300" y1="1270" x2="300" y2="1100" class="line" />
+
+            <!-- SECRETARIA -> Atributos -->
+            <line x1="300" y1="1400" x2="120" y2="1370" class="line" />
+            <line x1="300" y1="1400" x2="120" y2="1430" class="line" />
+
+            <!-- INSCRIPCIÓN -> GENERA -> HISTORIAL -->
+            <line x1="750" y1="700" x2="1100" y2="700" class="line" />
+            <line x1="1100" y1="700" x2="1500" y2="700" class="line" />
+
+
+            <!-- ========================================================= -->
+            <!-- 3. BLOQUE DERECHO: HISTORIAL Y EVALUACIONES (BIMESTRES) -->
+            <!-- ========================================================= -->
+
+            <!-- HISTORIAL (1500, 700) -> Atributos (Dispersos a la derecha sin cruzarse) -->
+            <line x1="1500" y1="700" x2="1900" y2="520" class="line" />
+            <line x1="1500" y1="700" x2="1900" y2="570" class="line" />
+            <line x1="1500" y1="700" x2="1900" y2="620" class="line" />
+            <line x1="1500" y1="700" x2="1900" y2="670" class="line" />
+            <line x1="1500" y1="700" x2="1900" y2="720" class="line" />
+            <line x1="1500" y1="700" x2="1900" y2="770" class="line" />
+            <line x1="1500" y1="700" x2="1900" y2="820" class="line" />
+            <line x1="1500" y1="700" x2="1900" y2="870" class="line" />
+            <line x1="1500" y1="700" x2="2150" y2="620" class="line" />
+            <line x1="1500" y1="700" x2="2150" y2="670" class="line" />
+            <line x1="1500" y1="700" x2="2150" y2="720" class="line" />
+            <line x1="1500" y1="700" x2="2150" y2="770" class="line" />
+
+            <!-- HISTORIAL -> TIENE -> EVALUACIÓN PARCIAL -->
+            <line x1="1500" y1="700" x2="1500" y2="1050" class="line" />
+
+            <!-- EVALUACIÓN PARCIAL (1500, 1050) -> Atributos -->
+            <line x1="1500" y1="1050" x2="1250" y2="980" class="line" />
+            <line x1="1500" y1="1050" x2="1250" y2="1030" class="line" />
+            <line x1="1500" y1="1050" x2="1250" y2="1080" class="line" />
+            <line x1="1500" y1="1050" x2="1250" y2="1130" class="line" />
+
+            <!-- EVALUACIÓN PARCIAL -> TIENE -> RECUPERACIÓN -->
+            <line x1="1500" y1="1050" x2="1800" y2="1050" class="line" />
+            <line x1="1800" y1="1050" x2="2100" y2="1050" class="line" />
+
+            <!-- RECUPERACIÓN (2100, 1050) -> Atributos -->
+            <line x1="2100" y1="1050" x2="2350" y2="980" class="line" />
+            <line x1="2100" y1="1050" x2="2350" y2="1030" class="line" />
+            <line x1="2100" y1="1050" x2="2350" y2="1080" class="line" />
+            <line x1="2100" y1="1050" x2="2350" y2="1130" class="line" />
+
+
+            <!-- ========================================================= -->
+            <!-- 4. BLOQUE INFERIOR: USUARIO Y ROL -->
+            <!-- ========================================================= -->
+
+            <!-- EVALUACIÓN PARCIAL -> APLICA -> USUARIO -->
+            <line x1="1500" y1="1050" x2="1500" y2="1400" class="line" />
+
+            <!-- USUARIO (1500, 1400) -> Atributos -->
+            <line x1="1500" y1="1400" x2="1250" y2="1350" class="line" />
+            <line x1="1500" y1="1400" x2="1250" y2="1400" class="line" />
+            <line x1="1500" y1="1400" x2="1250" y2="1450" class="line" />
+
+            <!-- USUARIO -> TIENE -> ROL -->
+            <line x1="1500" y1="1400" x2="1800" y2="1400" class="line" />
+            <line x1="1800" y1="1400" x2="2100" y2="1400" class="line" />
+
+            <!-- ROL (2100, 1400) -> Atributos -->
+            <line x1="2100" y1="1400" x2="2350" y2="1370" class="line" />
+            <line x1="2100" y1="1400" x2="2350" y2="1430" class="line" />
+
+
+            <!-- ========================================================= -->
+            <!-- NODOS DE ENTIDADES (Rectángulos) -->
+            <!-- ========================================================= -->
+            <g transform="translate(200, 220)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">CARRERA</text></g>
+            <g transform="translate(650, 220)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">ESTUDIANTE</text></g>
+            <g transform="translate(1400, 220)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">ASIGNATURA</text></g>
+            <g transform="translate(2000, 220)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">DOCENTE</text></g>
+            <g transform="translate(2600, 220)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">GESTIÓN ACADÉMICA</text></g>
+            <g transform="translate(2600, 470)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">PRERREQUISITO</text></g>
+
+            <g transform="translate(650, 670)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">INSCRIPCIÓN</text></g>
+            <g transform="translate(200, 1070)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">PAGO MATRÍCULA</text></g>
+            <g transform="translate(200, 1370)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">SECRETARIA</text></g>
+
+            <g transform="translate(1400, 670)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">HISTORIAL</text></g>
+            <g transform="translate(1400, 1020)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">EVALUACIÓN PARCIAL</text></g>
+            <g transform="translate(2000, 1020)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">RECUPERACIÓN</text></g>
+
+            <g transform="translate(1400, 1370)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">USUARIO</text></g>
+            <g transform="translate(2000, 1370)"><rect width="200" height="60" class="entity"/><text x="100" y="30" class="entity-text">ROL</text></g>
+
+
+            <!-- ========================================================= -->
+            <!-- NODOS DE RELACIONES (Rombos) -->
+            <!-- ========================================================= -->
+            <g transform="translate(520, 250)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">PERTENECE</text>
+            </g>
+            <g transform="translate(1100, 250)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">ESTUDIA</text>
+            </g>
+            <g transform="translate(1800, 250)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">IMPARTE</text>
+            </g>
+            <g transform="translate(2700, 380)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">CONTIENE</text>
+            </g>
+            <g transform="translate(520, 920)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">REALIZA</text>
+            </g>
+            <g transform="translate(300, 1270)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">REGISTRA</text>
+            </g>
+            <g transform="translate(1100, 700)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">GENERA</text>
+            </g>
+            <g transform="translate(1800, 1050)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">TIENE</text>
+            </g>
+            <g transform="translate(1500, 1220)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">APLICA</text>
+            </g>
+            <g transform="translate(1800, 1400)">
+                <polygon points="0,-30 60,0 0,30 -60,0" class="relation"/>
+                <text x="0" y="0" class="relation-text">TIENE</text>
+            </g>
+
+
+            <!-- ========================================================= -->
+            <!-- NODOS DE ATRIBUTOS (Elipses) -->
+            <!-- ========================================================= -->
+
+            <!-- Atributos CARRERA -->
+            <ellipse cx="120" cy="150" rx="70" ry="25" class="attribute"/><text x="120" y="150" class="attr-text pk-text">ID</text>
+            <ellipse cx="120" cy="220" rx="70" ry="25" class="attribute"/><text x="120" y="220" class="attr-text">Nombre</text>
+            <ellipse cx="120" cy="290" rx="70" ry="25" class="attribute"/><text x="120" y="290" class="attr-text">Resolución</text>
+            <ellipse cx="120" cy="360" rx="70" ry="25" class="attribute"/><text x="120" y="360" class="attr-text">Duración</text>
+
+            <!-- Atributos ESTUDIANTE -->
+            <ellipse cx="620" cy="100" rx="60" ry="22" class="attribute"/><text x="620" y="100" class="attr-text pk-text">CI</text>
+            <ellipse cx="750" cy="100" rx="60" ry="22" class="attribute"/><text x="750" y="100" class="attr-text">Nombre</text>
+            <ellipse cx="880" cy="100" rx="60" ry="22" class="attribute"/><text x="880" y="100" class="attr-text">Ap. Paterno</text>
+            <ellipse cx="1000" cy="100" rx="60" ry="22" class="attribute"/><text x="1000" y="100" class="attr-text">Celular</text>
+            <ellipse cx="620" cy="160" rx="60" ry="22" class="attribute"/><text x="620" y="160" class="attr-text">Tipo Est.</text>
+            <ellipse cx="880" cy="160" rx="60" ry="22" class="attribute"/><text x="880" y="160" class="attr-text">Estado Acad.</text>
+
+            <!-- Atributos ASIGNATURA -->
+            <ellipse cx="1350" cy="120" rx="60" ry="22" class="attribute"/><text x="1350" y="120" class="attr-text pk-text">Código</text>
+            <ellipse cx="1470" cy="120" rx="60" ry="22" class="attribute"/><text x="1470" y="120" class="attr-text">Nombre</text>
+            <ellipse cx="1590" cy="120" rx="60" ry="22" class="attribute"/><text x="1590" y="120" class="attr-text">Horas</text>
+            <ellipse cx="1710" cy="120" rx="60" ry="22" class="attribute"/><text x="1710" y="120" class="attr-text">Nivel</text>
+
+            <!-- Atributos DOCENTE -->
+            <ellipse cx="1950" cy="120" rx="60" ry="22" class="attribute"/><text x="1950" y="120" class="attr-text pk-text">CI</text>
+            <ellipse cx="2070" cy="120" rx="60" ry="22" class="attribute"/><text x="2070" y="120" class="attr-text">Nombre</text>
+            <ellipse cx="2190" cy="120" rx="60" ry="22" class="attribute"/><text x="2190" y="120" class="attr-text">Especialidad</text>
+            <ellipse cx="2310" cy="120" rx="60" ry="22" class="attribute"/><text x="2310" y="120" class="attr-text">Email</text>
+
+            <!-- Atributos GESTIÓN ACADÉMICA -->
+            <ellipse cx="2550" cy="120" rx="60" ry="22" class="attribute"/><text x="2550" y="120" class="attr-text pk-text">ID</text>
+            <ellipse cx="2670" cy="120" rx="60" ry="22" class="attribute"/><text x="2670" y="120" class="attr-text">Año</text>
+            <ellipse cx="2790" cy="120" rx="60" ry="22" class="attribute"/><text x="2790" y="120" class="attr-text">F. Inicio</text>
+            <ellipse cx="2910" cy="120" rx="60" ry="22" class="attribute"/><text x="2910" y="120" class="attr-text">F. Fin</text>
+
+            <!-- Atributos PRERREQUISITO -->
+            <ellipse cx="2550" cy="580" rx="70" ry="22" class="attribute"/><text x="2550" y="580" class="attr-text pk-text">ID</text>
+            <ellipse cx="2700" cy="590" rx="70" ry="22" class="attribute"/><text x="2700" y="590" class="attr-text">Cod. Asig.</text>
+            <ellipse cx="2850" cy="580" rx="70" ry="22" class="attribute"/><text x="2850" y="580" class="attr-text">Cod. Requerido</text>
+
+            <!-- Atributos INSCRIPCIÓN -->
+            <ellipse cx="520" cy="620" rx="70" ry="22" class="attribute"/><text x="520" y="620" class="attr-text pk-text">ID</text>
+            <ellipse cx="520" cy="680" rx="70" ry="22" class="attribute"/><text x="520" y="680" class="attr-text">Fecha</text>
+            <ellipse cx="520" cy="740" rx="70" ry="22" class="attribute"/><text x="520" y="740" class="attr-text">Turno</text>
+            <ellipse cx="520" cy="800" rx="70" ry="22" class="attribute"/><text x="520" y="800" class="attr-text">Grupo</text>
+
+            <!-- Atributos PAGO MATRÍCULA -->
+            <ellipse cx="120" cy="1020" rx="70" ry="22" class="attribute"/><text x="120" y="1020" class="attr-text pk-text">ID</text>
+            <ellipse cx="120" cy="1080" rx="70" ry="22" class="attribute"/><text x="120" y="1080" class="attr-text">Nro. Comp.</text>
+            <ellipse cx="120" cy="1140" rx="70" ry="22" class="attribute"/><text x="120" y="1140" class="attr-text">Monto</text>
+            <ellipse cx="120" cy="1200" rx="70" ry="22" class="attribute"/><text x="120" y="1200" class="attr-text">Fecha Pago</text>
+
+            <!-- Atributos SECRETARIA -->
+            <ellipse cx="120" cy="1370" rx="70" ry="22" class="attribute"/><text x="120" y="1370" class="attr-text pk-text">ID</text>
+            <ellipse cx="120" cy="1430" rx="70" ry="22" class="attribute"/><text x="120" y="1430" class="attr-text">Nombre</text>
+
+            <!-- Atributos HISTORIAL (Detalles de Bimestres desplegados) -->
+            <ellipse cx="1900" cy="520" rx="75" ry="20" class="attribute"/><text x="1900" y="520" class="attr-text">Teórico B1</text>
+            <ellipse cx="1900" cy="570" rx="75" ry="20" class="attribute"/><text x="1900" y="570" class="attr-text">Práctico B1</text>
+            <ellipse cx="1900" cy="620" rx="75" ry="20" class="attribute"/><text x="1900" y="620" class="attr-text">Teórico B2</text>
+            <ellipse cx="1900" cy="670" rx="75" ry="20" class="attribute"/><text x="1900" y="670" class="attr-text">Práctico B2</text>
+            <ellipse cx="1900" cy="720" rx="75" ry="20" class="attribute"/><text x="1900" y="720" class="attr-text">Teórico B3</text>
+            <ellipse cx="1900" cy="770" rx="75" ry="20" class="attribute"/><text x="1900" y="770" class="attr-text">Práctico B3</text>
+            <ellipse cx="1900" cy="820" rx="75" ry="20" class="attribute"/><text x="1900" y="820" class="attr-text">Teórico B4</text>
+            <ellipse cx="1900" cy="870" rx="75" ry="20" class="attribute"/><text x="1900" y="870" class="attr-text">Práctico B4</text>
+
+            <ellipse cx="2150" cy="620" rx="75" ry="20" class="attribute"/><text x="2150" y="620" class="attr-text">Nota Total</text>
+            <ellipse cx="2150" cy="670" rx="75" ry="20" class="attribute"/><text x="2150" y="670" class="attr-text">Nota Final</text>
+            <ellipse cx="2150" cy="720" rx="75" ry="20" class="attribute"/><text x="2150" y="720" class="attr-text">Observaciones</text>
+            <ellipse cx="2150" cy="770" rx="75" ry="20" class="attribute"/><text x="2150" y="770" class="attr-text">Estado</text>
+
+            <!-- Atributos EVALUACIÓN PARCIAL -->
+            <ellipse cx="1250" cy="980" rx="70" ry="22" class="attribute"/><text x="1250" y="980" class="attr-text pk-text">ID</text>
+            <ellipse cx="1250" cy="1030" rx="70" ry="22" class="attribute"/><text x="1250" y="1030" class="attr-text">Nro. Parcial</text>
+            <ellipse cx="1250" cy="1080" rx="70" ry="22" class="attribute"/><text x="1250" y="1080" class="attr-text">Nota Teórica</text>
+            <ellipse cx="1250" cy="1130" rx="70" ry="22" class="attribute"/><text x="1250" y="1130" class="attr-text">Nota Práctica</text>
+
+            <!-- Atributos RECUPERACIÓN -->
+            <ellipse cx="2350" cy="980" rx="70" ry="22" class="attribute"/><text x="2350" y="980" class="attr-text pk-text">ID</text>
+            <ellipse cx="2350" cy="1030" rx="70" ry="22" class="attribute"/><text x="2350" y="1030" class="attr-text">Nota Recup.</text>
+            <ellipse cx="2350" cy="1080" rx="70" ry="22" class="attribute"/><text x="2350" y="1080" class="attr-text">Fecha Rend.</text>
+            <ellipse cx="2350" cy="1130" rx="70" ry="22" class="attribute"/><text x="2350" y="1130" class="attr-text">Estado Final</text>
+
+            <!-- Atributos USUARIO -->
+            <ellipse cx="1250" cy="1350" rx="70" ry="22" class="attribute"/><text x="1250" y="1350" class="attr-text pk-text">ID</text>
+            <ellipse cx="1250" cy="1400" rx="70" ry="22" class="attribute"/><text x="1250" y="1400" class="attr-text">Usuario</text>
+            <ellipse cx="1250" cy="1450" rx="70" ry="22" class="attribute"/><text x="1250" y="1450" class="attr-text">Clave</text>
+
+            <!-- Atributos ROL -->
+            <ellipse cx="2350" cy="1370" rx="70" ry="22" class="attribute"/><text x="2350" y="1370" class="attr-text pk-text">ID</text>
+            <ellipse cx="2350" cy="1430" rx="70" ry="22" class="attribute"/><text x="2350" y="1430" class="attr-text">Nombre</text>
+
+            <!-- ========================================================= -->
+            <!-- CARDINALIDADES (Indicadores numéricos sobre las líneas) -->
+            <!-- ========================================================= -->
+            <text x="420" y="240" class="card-text">(1,1)</text>
+            <text x="620" y="240" class="card-text">(1,n)</text>
+
+            <text x="870" y="240" class="card-text">(0,n)</text>
+            <text x="1370" y="240" class="card-text">(1,n)</text>
+
+            <text x="1620" y="240" class="card-text">(1,n)</text>
+            <text x="1970" y="240" class="card-text">(1,n)</text>
+
+            <text x="2710" y="300" class="card-text">(1,n)</text>
+
+            <text x="760" y="470" class="card-text">(1,1)</text>
+            <text x="760" y="650" class="card-text">(1,n)</text>
+
+            <text x="620" y="800" class="card-text">(1,n)</text>
+
+            <text x="870" y="690" class="card-text">(1,1)</text>
+            <text x="1370" y="690" class="card-text">(1,n)</text>
+
+            <text x="1510" y="800" class="card-text">(1,1)</text>
+            <text x="1510" y="1000" class="card-text">(1,n)</text>
+
+            <text x="1620" y="1040" class="card-text">(1,1)</text>
+            <text x="1970" y="1040" class="card-text">(0,1)</text>
+
+            <text x="1510" y="1100" class="card-text">(1,1)</text>
+            <text x="1510" y="1350" class="card-text">(0,n)</text>
+
+            <text x="1620" y="1390" class="card-text">(1,1)</text>
+            <text x="1970" y="1390" class="card-text">(1,n)</text>
+
+        </svg>
+    </div>
+
+</body>
+</html>

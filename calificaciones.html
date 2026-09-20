@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Calificaciones — INST</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #22263a;
+            --surface3: #2c3150;
+            --accent: #6c63ff;
+            --accent2: #a78bfa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --border: #2d3748;
+            --gold: #f1c40f;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(135deg, #1a1d27 0%, #22263a 50%, #1a1d27 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 32px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        header h1 { font-size: 1.3rem; font-weight: 700; color: var(--text); }
+        header p  { font-size: 0.78rem; color: var(--text2); margin-top: 2px; }
+        nav { margin-left: auto; display: flex; gap: 8px; }
+        .nav-btn {
+            padding: 8px 18px; border-radius: 8px;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text2); cursor: pointer; font-size: 0.82rem;
+            font-family: 'Inter', sans-serif; font-weight: 500; transition: all .2s;
+        }
+        .nav-btn.active, .nav-btn:hover {
+            background: var(--accent); color: #fff; border-color: var(--accent);
+        }
+
+        /* LAYOUT */
+        .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* CARDS */
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px; margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 1rem; font-weight: 700; color: var(--text);
+            margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+        }
+        .card-title .icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 8px; display: flex; align-items: center;
+            justify-content: center; font-size: 16px;
+        }
+
+        /* GRID */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+        /* FORM */
+        .form-group { margin-bottom: 16px; }
+        label {
+            display: block; font-size: 0.78rem; font-weight: 600;
+            color: var(--text2); margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: .5px;
+        }
+        input, select, textarea {
+            width: 100%; background: var(--surface2);
+            border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 14px; color: var(--text);
+            font-family: 'Inter', sans-serif; font-size: 0.88rem;
+            transition: border .2s, box-shadow .2s; outline: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(108,99,255,.18);
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        select option { background: var(--surface2); }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 22px; border-radius: 10px; border: none;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem;
+            font-weight: 600; cursor: pointer; transition: all .2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,.4); }
+        .btn-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+        .btn-success:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,.35); }
+        .btn-danger  { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; }
+        .btn-danger:hover  { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(239,68,68,.35); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; padding: 20px; text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2));
+        }
+        .stat-number { font-size: 2rem; font-weight: 800; color: var(--text); line-height: 1; }
+        .stat-label  { font-size: 0.75rem; color: var(--text2); margin-top: 6px; font-weight: 500; }
+
+        /* TABLE */
+        .table-wrapper { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        thead tr { background: var(--surface2); }
+        th {
+            padding: 12px 14px; text-align: left; font-size: 0.75rem;
+            font-weight: 700; color: var(--text2);
+            text-transform: uppercase; letter-spacing: .6px; white-space: nowrap;
+        }
+        td {
+            padding: 11px 14px; font-size: 0.85rem;
+            color: var(--text); border-top: 1px solid var(--border);
+        }
+        tbody tr { transition: background .15s; }
+        tbody tr:hover { background: var(--surface2); }
+
+        /* BADGES */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .badge-green  { background: rgba(16,185,129,.18); color: #10b981; }
+        .badge-red    { background: rgba(239,68,68,.18);  color: #ef4444; }
+        .badge-yellow { background: rgba(245,158,11,.18); color: #f59e0b; }
+        .badge-blue   { background: rgba(59,130,246,.18); color: #3b82f6; }
+        .badge-purple { background: rgba(108,99,255,.18); color: var(--accent2); }
+
+        /* PROMEDIO */
+        .promedio-value { font-weight: 800; font-size: 1.05rem; }
+        .promedio-aprobado  { color: var(--success); }
+        .promedio-reprobado { color: var(--danger); }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.65); z-index: 999;
+            backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; width: 90%; max-width: 800px;
+            max-height: 90vh; overflow-y: auto; padding: 30px;
+            position: relative; animation: modalIn .25s ease;
+        }
+        @keyframes modalIn {
+            from { transform: translateY(24px); opacity: 0; }
+            to   { transform: none; opacity: 1; }
+        }
+        .modal-title {
+            font-size: 1.15rem; font-weight: 700; color: var(--text);
+            margin-bottom: 22px; display: flex; align-items: center; gap: 10px;
+        }
+        .modal-close {
+            position: absolute; top: 18px; right: 18px;
+            background: var(--surface2); border: 1px solid var(--border);
+            color: var(--text2); width: 32px; height: 32px;
+            border-radius: 8px; cursor: pointer; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all .2s;
+        }
+        .modal-close:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+        /* BIMESTRES TABLE */
+        .bimestres-table { width: 100%; border-collapse: collapse; }
+        .bimestres-table th, .bimestres-table td {
+            padding: 10px 12px; border: 1px solid var(--border);
+            text-align: center; font-size: 0.83rem;
+        }
+        .bimestres-table th {
+            background: var(--surface2); color: var(--text2);
+            font-weight: 700; text-transform: uppercase;
+            font-size: 0.72rem; letter-spacing: .5px;
+        }
+        .bimestres-table td:first-child { text-align: left; font-weight: 600; }
+        .bimestres-table input[type=number] {
+            width: 65px; text-align: center;
+            padding: 5px 6px; font-size: 0.83rem;
+        }
+
+        /* RESUMEN FINAL */
+        .resumen-box {
+            border-radius: 14px; padding: 20px 24px;
+            margin-top: 16px; border: 2px solid transparent;
+        }
+        .resumen-aprobado  { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.3); }
+        .resumen-segundo   { background: rgba(245,158,11,.08);  border-color: rgba(245,158,11,.3); }
+        .resumen-reprobado { background: rgba(239,68,68,.08);   border-color: rgba(239,68,68,.3); }
+        .resumen-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
+        .resumen-aprobado  .resumen-title { color: var(--success); }
+        .resumen-segundo   .resumen-title { color: var(--warning); }
+        .resumen-reprobado .resumen-title { color: var(--danger); }
+
+        /* DOCENTE CARD */
+        .docente-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 18px; }
+        .docente-card {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 14px; padding: 20px;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .docente-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.35); }
+        .docente-avatar {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 14px; display: flex; align-items: center;
+            justify-content: center; font-size: 22px; margin-bottom: 14px;
+        }
+        .docente-name  { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+        .docente-esp   { font-size: 0.78rem; color: var(--text2); margin-bottom: 12px; }
+        .docente-info  { font-size: 0.78rem; color: var(--text2); display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+
+        /* ALERT */
+        .alert {
+            padding: 12px 18px; border-radius: 10px; font-size: 0.84rem;
+            font-weight: 500; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .alert-danger { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: #ef4444; }
+
+        .sep { height: 1px; background: var(--border); margin: 20px 0; }
+
+        @keyframes fadeUp {
+            from { transform: translateY(16px); opacity: 0; }
+            to   { transform: none; opacity: 1; }
+        }
+
+        @media(max-width:900px) {
+            .stats-grid { grid-template-columns: repeat(2,1fr); }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">📚</div>
+    <div>
+        <h1>Sistema Académico INST</h1>
+        <p>Gestión de Calificaciones y Docentes</p>
+    </div>
+    <nav>
+        <button class="nav-btn active" onclick="showTab('calificaciones', this)">📝 Calificaciones</button>
+        <button class="nav-btn" onclick="showTab('docentes', this)">👩‍🏫 Docentes</button>
+        <button class="nav-btn" onclick="showTab('reporte', this)">📊 Reporte General</button>
+    </nav>
+</header>
+
+<div class="container">
+
+    <!-- TAB: CALIFICACIONES -->
+    <div id="tab-calificaciones" class="tab-content active">
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total">0</div>
+                <div class="stat-label">📋 Total Estudiantes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color:var(--success)" id="stat-aprobados">0</div>
+                <div class="stat-label">✅ Aprobados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color:var(--warning)" id="stat-segundo">0</div>
+                <div class="stat-label">🔄 Segundo Turno</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color:var(--danger)" id="stat-reprobados">0</div>
+                <div class="stat-label">❌ Reprobados</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <div class="icon">🔍</div>
+                Buscar / Filtrar
+            </div>
+            <div class="grid-3">
+                <div class="form-group" style="margin:0">
+                    <label>Buscar (CI o Nombre)</label>
+                    <input type="text" id="buscar-estudiante" placeholder="Buscar..." oninput="filtrarEstudiantes()">
+                </div>
+                <div class="form-group" style="margin:0">
+                    <label>Gestión / Año</label>
+                    <select id="filtro-gestion">
+                        <option value="2026">2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0">
+                    <label>Carrera</label>
+                    <select id="filtro-carrera" onchange="filtrarEstudiantes()">
+                        <option value="">Todas</option>
+                        <option value="SIG">Sistemas de Información</option>
+                        <option value="CONT">Contabilidad</option>
+                        <option value="ADM">Administración</option>
+                        <option value="TEC">Técnico en Redes</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="justify-content:space-between">
+                <span style="display:flex;align-items:center;gap:10px">
+                    <div class="icon">👥</div>
+                    Lista de Estudiantes
+                </span>
+                <button class="btn btn-primary" onclick="openModalNuevoEstudiante()">➕ Agregar Estudiante</button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>CI</th>
+                            <th>Nombre Completo</th>
+                            <th>Carrera</th>
+                            <th>Turno</th>
+                            <th>Aprobadas</th>
+                            <th>Reprobadas</th>
+                            <th>Promedio Gral.</th>
+                            <th>Estado Final</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-estudiantes"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: DOCENTES -->
+    <div id="tab-docentes" class="tab-content">
+        <div class="card">
+            <div class="card-title" style="justify-content:space-between">
+                <span style="display:flex;align-items:center;gap:10px">
+                    <div class="icon">👩‍🏫</div>
+                    Docentes Registrados
+                </span>
+                <button class="btn btn-primary" onclick="openModalDocente()">➕ Agregar Docente</button>
+            </div>
+            <div class="docente-grid" id="grid-docentes"></div>
+        </div>
+    </div>
+
+    <!-- TAB: REPORTE GENERAL -->
+    <div id="tab-reporte" class="tab-content">
+        <div class="card">
+            <div class="card-title">
+                <div class="icon">📊</div>
+                Reporte General — Gestión <span id="reporte-gestion">2026</span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>CI</th>
+                            <th>Estudiante</th>
+                            <th>Carrera</th>
+                            <th>Turno</th>
+                            <th>Materias</th>
+                            <th>Aprobadas</th>
+                            <th>Reprobadas</th>
+                            <th>Promedio</th>
+                            <th>Estado</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-reporte"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL: CARGAR NOTAS -->
+<div class="modal-overlay" id="modal-notas">
+    <div class="modal" style="max-width:960px">
+        <button class="modal-close" onclick="closeModal('modal-notas')">✕</button>
+        <div class="modal-title">📝 Cargar Notas por Bimestre — <span id="modal-nombre-est"></span></div>
+        <div class="grid-2" style="margin-bottom:18px">
+            <div>
+                <label>CI del Estudiante</label>
+                <input type="text" id="modal-ci-est" readonly style="opacity:.6">
+            </div>
+            <div>
+                <label>Carrera</label>
+                <input type="text" id="modal-carrera-est" readonly style="opacity:.6">
+            </div>
+        </div>
+        <div id="tabla-notas-container"></div>
+        <div id="resumen-final"></div>
+        <div class="sep"></div>
+        <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
+            <button class="btn btn-outline" onclick="closeModal('modal-notas')">Cancelar</button>
+            <button class="btn btn-success" onclick="guardarNotas()">💾 Guardar Calificaciones</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: NUEVO ESTUDIANTE -->
+<div class="modal-overlay" id="modal-nuevo-estudiante">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal('modal-nuevo-estudiante')">✕</button>
+        <div class="modal-title">➕ Registrar Nuevo Estudiante</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>CI *</label>
+                <input type="text" id="new-ci" placeholder="Ej: 12345678">
+            </div>
+            <div class="form-group">
+                <label>Nombre(s) *</label>
+                <input type="text" id="new-nombre" placeholder="Nombres">
+            </div>
+            <div class="form-group">
+                <label>Apellido Paterno *</label>
+                <input type="text" id="new-apPat" placeholder="Apellido Paterno">
+            </div>
+            <div class="form-group">
+                <label>Apellido Materno</label>
+                <input type="text" id="new-apMat" placeholder="Apellido Materno">
+            </div>
+            <div class="form-group">
+                <label>Carrera *</label>
+                <select id="new-carrera">
+                    <option value="SIG">Sistemas de Información</option>
+                    <option value="CONT">Contabilidad</option>
+                    <option value="ADM">Administración</option>
+                    <option value="TEC">Técnico en Redes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Turno</label>
+                <select id="new-turno">
+                    <option value="Mañana">Mañana</option>
+                    <option value="Tarde">Tarde</option>
+                    <option value="Noche">Noche</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Celular</label>
+                <input type="text" id="new-celular" placeholder="Ej: 70000000">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="new-email" placeholder="correo@mail.com">
+            </div>
+        </div>
+        <div id="alert-nuevo-est"></div>
+        <div style="display:flex;gap:12px;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="closeModal('modal-nuevo-estudiante')">Cancelar</button>
+            <button class="btn btn-primary" onclick="guardarNuevoEstudiante()">💾 Registrar Estudiante</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: AGREGAR DOCENTE -->
+<div class="modal-overlay" id="modal-docente">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal('modal-docente')">✕</button>
+        <div class="modal-title">👩‍🏫 Registrar Docente</div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label>CI *</label>
+                <input type="text" id="doc-ci" placeholder="Ej: 87654321">
+            </div>
+            <div class="form-group">
+                <label>Nombre(s) *</label>
+                <input type="text" id="doc-nombre" placeholder="Nombres">
+            </div>
+            <div class="form-group">
+                <label>Apellido Paterno *</label>
+                <input type="text" id="doc-apPat" placeholder="Apellido Paterno">
+            </div>
+            <div class="form-group">
+                <label>Apellido Materno</label>
+                <input type="text" id="doc-apMat" placeholder="Apellido Materno">
+            </div>
+            <div class="form-group">
+                <label>Especialidad *</label>
+                <input type="text" id="doc-especialidad" placeholder="Ej: Matemáticas, Contabilidad...">
+            </div>
+            <div class="form-group">
+                <label>Materia que Imparte</label>
+                <select id="doc-materia">
+                    <option value="Matemáticas">Matemáticas</option>
+                    <option value="Comunicación">Comunicación</option>
+                    <option value="Programación">Programación</option>
+                    <option value="Contabilidad">Contabilidad</option>
+                    <option value="Administración">Administración</option>
+                    <option value="Redes">Redes y Comunicaciones</option>
+                    <option value="BD">Base de Datos</option>
+                    <option value="Física">Física</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="doc-email" placeholder="correo@inst.edu.bo">
+            </div>
+            <div class="form-group">
+                <label>Celular</label>
+                <input type="text" id="doc-celular" placeholder="Ej: 70000000">
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+                <label>Título Académico</label>
+                <input type="text" id="doc-titulo" placeholder="Ej: Lic. en Sistemas, Ing. de Sistemas...">
+            </div>
+        </div>
+        <div id="alert-docente"></div>
+        <div style="display:flex;gap:12px;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="closeModal('modal-docente')">Cancelar</button>
+            <button class="btn btn-primary" onclick="guardarDocente()">💾 Registrar Docente</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── CONFIGURACIÓN ──────────────────────────────────────────────
+const NOTA_MINIMA   = 51;   // >= 51 = APROBADO
+const MAX_SEG_TURNO = 3;    // <= 3 reprobadas = SEGUNDO TURNO; > 3 = REPROBADO
+
+const MATERIAS = {
+    SIG:  ['Matemáticas','Comunicación','Programación','Base de Datos','Redes','Inglés'],
+    CONT: ['Contabilidad I','Matemáticas','Comunicación','Economía','Derecho Comercial','Inglés'],
+    ADM:  ['Administración','Matemáticas','Comunicación','Derecho Comercial','Marketing','Inglés'],
+    TEC:  ['Redes','Matemáticas','Programación','Sistemas Operativos','Seguridad Informática','Inglés'],
+};
+
+const CARRERA_NOMBRE = {
+    SIG: 'Sistemas de Información',
+    CONT: 'Contabilidad',
+    ADM: 'Administración',
+    TEC: 'Técnico en Redes',
+};
+
+// ── DATOS ──────────────────────────────────────────────────────
+let estudiantes = JSON.parse(localStorage.getItem('inst_est') || 'null');
+let docentes    = JSON.parse(localStorage.getItem('inst_doc') || 'null');
+let estudianteActivo = null;
+
+if (!estudiantes) {
+    estudiantes = [
+        { ci:'12345678', nombre:'Juan',  apPat:'Mamani',  apMat:'Quispe',   carrera:'SIG',  turno:'Mañana', celular:'70123456', email:'juan@mail.com',  notas:{} },
+        { ci:'87654321', nombre:'María', apPat:'Condori', apMat:'López',    carrera:'CONT', turno:'Tarde',  celular:'76543210', email:'maria@mail.com', notas:{} },
+        { ci:'11223344', nombre:'Pedro', apPat:'Flores',  apMat:'Gutierrez',carrera:'ADM',  turno:'Mañana', celular:'71234567', email:'pedro@mail.com', notas:{} },
+    ];
+    save();
+}
+if (!docentes) {
+    docentes = [
+        { ci:'55667788', nombre:'Ana',    apPat:'Vargas',  apMat:'Ríos',   especialidad:'Matemáticas', materia:'Matemáticas', email:'ana@inst.edu.bo',    celular:'72000001', titulo:'Lic. en Matemáticas' },
+        { ci:'99887766', nombre:'Carlos', apPat:'Mendoza', apMat:'Torres', especialidad:'Sistemas',    materia:'Programación', email:'carlos@inst.edu.bo', celular:'72000002', titulo:'Ing. de Sistemas' },
+    ];
+    save();
+}
+
+function save() {
+    localStorage.setItem('inst_est', JSON.stringify(estudiantes));
+    localStorage.setItem('inst_doc', JSON.stringify(docentes));
+}
+
+// ── TABS ───────────────────────────────────────────────────────
+function showTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    btn.classList.add('active');
+    if (tab === 'reporte') renderReporte();
+}
+
+// ── MODALES ────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ── CÁLCULO ESTADO ─────────────────────────────────────────────
+function calcularEstado(carrera, notas) {
+    const mats = MATERIAS[carrera] || [];
+    let aprob = 0, reprob = 0, suma = 0, cnt = 0;
+    const detalle = [];
+
+    mats.forEach(mat => {
+        const n = notas[mat] || {};
+        const vals = ['b1','b2','b3','b4'].map(b => n[b]).filter(v => v !== null && v !== undefined && v !== '' && !isNaN(v)).map(Number);
+        const prom = vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null;
+        if (prom !== null) { suma += prom; cnt++; prom >= NOTA_MINIMA ? aprob++ : reprob++; }
+        detalle.push({ mat, prom });
+    });
+
+    const promG = cnt ? suma / cnt : null;
+    let estado, literal, obs;
+
+    if (reprob === 0 && cnt > 0) {
+        estado = 'APROBADO'; literal = '✅ APROBADO'; obs = '';
+    } else if (reprob > 0 && reprob <= MAX_SEG_TURNO) {
+        estado = 'SEGUNDO_TURNO'; literal = '🔄 SEGUNDO TURNO';
+        const matsRep = detalle.filter(d => d.prom !== null && d.prom < NOTA_MINIMA).map(d => d.mat);
+        obs = 'Debe rendir segundo turno en: ' + matsRep.join(', ') + '.';
+    } else if (reprob > MAX_SEG_TURNO) {
+        estado = 'REPROBADO'; literal = '❌ REPROBADO';
+        const matsRep = detalle.filter(d => d.prom !== null && d.prom < NOTA_MINIMA).map(d => d.mat);
+        obs = 'REPROBADO — Reprobó más de 3 materias: ' + matsRep.join(', ') + '. Deberá repetir el año académico.';
+    } else {
+        estado = 'SIN_NOTAS'; literal = '⚪ Sin Notas'; obs = '';
+    }
+
+    return { aprob, reprob, promG, estado, literal, obs, detalle };
+}
+
+// ── RENDER TABLA ESTUDIANTES ───────────────────────────────────
+function renderEstudiantes(filtroTxt = '', filtroCar = '') {
+    const tbody = document.getElementById('tbody-estudiantes');
+    tbody.innerHTML = '';
+    let total = 0, aprobados = 0, segundo = 0, reprobados = 0;
+
+    const lista = estudiantes.filter(e => {
+        const txt = `${e.ci} ${e.nombre} ${e.apPat} ${e.apMat}`.toLowerCase();
+        const carOk = !filtroCar || e.carrera === filtroCar;
+        return txt.includes(filtroTxt.toLowerCase()) && carOk;
+    });
+
+    lista.forEach(est => {
+        const { aprob, reprob, promG, estado, literal } = calcularEstado(est.carrera, est.notas || {});
+        total++;
+        if (estado === 'APROBADO')      aprobados++;
+        else if (estado === 'SEGUNDO_TURNO') segundo++;
+        else if (estado === 'REPROBADO')     reprobados++;
+
+        const bc = estado === 'APROBADO' ? 'badge-green' : estado === 'SEGUNDO_TURNO' ? 'badge-yellow' : estado === 'REPROBADO' ? 'badge-red' : 'badge-blue';
+        const mats = MATERIAS[est.carrera] || [];
+        const promTxt = promG !== null ? promG.toFixed(1) : '—';
+        const promCls = promG !== null ? (promG >= NOTA_MINIMA ? 'promedio-aprobado' : 'promedio-reprobado') : '';
+
+        tbody.innerHTML += `
+        <tr>
+            <td><span style="font-family:monospace;font-weight:700">${est.ci}</span></td>
+            <td>
+                <div style="font-weight:600">${est.nombre} ${est.apPat} ${est.apMat || ''}</div>
+                <div style="font-size:.74rem;color:var(--text2)">${est.email || ''}</div>
+            </td>
+            <td><span class="badge badge-purple">${CARRERA_NOMBRE[est.carrera] || est.carrera}</span></td>
+            <td>${est.turno}</td>
+            <td><span style="color:var(--success);font-weight:700">${aprob}</span>/${mats.length}</td>
+            <td><span style="color:${reprob>0?'var(--danger)':'var(--text2)'};font-weight:700">${reprob}</span></td>
+            <td><span class="promedio-value ${promCls}">${promTxt}</span></td>
+            <td><span class="badge ${bc}">${literal}</span></td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-primary btn-sm" onclick="openModalNotas('${est.ci}')">📝 Notas</button>
+                <button class="btn btn-danger btn-sm" onclick="eliminarEst('${est.ci}')">🗑</button>
+            </td>
+        </tr>`;
+    });
+
+    document.getElementById('stat-total').textContent      = total;
+    document.getElementById('stat-aprobados').textContent  = aprobados;
+    document.getElementById('stat-segundo').textContent    = segundo;
+    document.getElementById('stat-reprobados').textContent = reprobados;
+}
+
+function filtrarEstudiantes() {
+    renderEstudiantes(
+        document.getElementById('buscar-estudiante').value,
+        document.getElementById('filtro-carrera').value
+    );
+}
+
+// ── MODAL NOTAS ────────────────────────────────────────────────
+function openModalNotas(ci) {
+    const est = estudiantes.find(e => e.ci === ci);
+    if (!est) return;
+    estudianteActivo = est;
+
+    document.getElementById('modal-nombre-est').textContent = `${est.nombre} ${est.apPat} ${est.apMat || ''}`;
+    document.getElementById('modal-ci-est').value           = est.ci;
+    document.getElementById('modal-carrera-est').value      = CARRERA_NOMBRE[est.carrera] || est.carrera;
+
+    const mats  = MATERIAS[est.carrera] || [];
+    const notas = est.notas || {};
+
+    let html = `<div style="overflow-x:auto"><table class="bimestres-table">
+    <thead><tr>
+        <th style="text-align:left;min-width:180px">Materia</th>
+        <th style="min-width:80px">Bimestre 1<br><small style="font-weight:400">(0–100)</small></th>
+        <th style="min-width:80px">Bimestre 2<br><small style="font-weight:400">(0–100)</small></th>
+        <th style="min-width:80px">Bimestre 3<br><small style="font-weight:400">(0–100)</small></th>
+        <th style="min-width:80px">Bimestre 4<br><small style="font-weight:400">(0–100)</small></th>
+        <th style="min-width:110px">Promedio Parcial</th>
+        <th style="min-width:100px">Estado</th>
+    </tr></thead><tbody>`;
+
+    mats.forEach(mat => {
+        const n   = notas[mat] || {};
+        const key = mat.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+        html += `<tr>
+            <td style="font-weight:600">${mat}</td>
+            <td><input type="number" min="0" max="100" value="${n.b1??''}" oninput="recFila('${key}','${mat}')" id="n_${key}_b1"></td>
+            <td><input type="number" min="0" max="100" value="${n.b2??''}" oninput="recFila('${key}','${mat}')" id="n_${key}_b2"></td>
+            <td><input type="number" min="0" max="100" value="${n.b3??''}" oninput="recFila('${key}','${mat}')" id="n_${key}_b3"></td>
+            <td><input type="number" min="0" max="100" value="${n.b4??''}" oninput="recFila('${key}','${mat}')" id="n_${key}_b4"></td>
+            <td id="p_${key}" style="font-weight:700">—</td>
+            <td id="e_${key}"></td>
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    document.getElementById('tabla-notas-container').innerHTML = html;
+
+    mats.forEach(mat => {
+        const key = mat.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+        recFila(key, mat);
+    });
+    recResumen();
+    openModal('modal-notas');
+}
+
+function getN(key, bim) {
+    const el = document.getElementById(`n_${key}_${bim}`);
+    return (el && el.value !== '') ? parseFloat(el.value) : null;
+}
+
+function recFila(key, mat) {
+    const vals = ['b1','b2','b3','b4'].map(b => getN(key, b)).filter(v => v !== null && !isNaN(v));
+    const prom = vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null;
+    const pEl = document.getElementById(`p_${key}`);
+    const eEl = document.getElementById(`e_${key}`);
+    if (prom !== null) {
+        const ok = prom >= NOTA_MINIMA;
+        pEl.textContent = prom.toFixed(1);
+        pEl.style.color = ok ? 'var(--success)' : 'var(--danger)';
+        eEl.innerHTML   = ok
+            ? '<span class="badge badge-green">✅ APROBADO</span>'
+            : '<span class="badge badge-red">❌ REPROBADO</span>';
+    } else {
+        pEl.textContent = '—';
+        pEl.style.color = 'var(--text2)';
+        eEl.innerHTML   = '<span class="badge" style="background:rgba(148,163,184,.15);color:var(--text2)">Sin notas</span>';
+    }
+    recResumen();
+}
+
+function recResumen() {
+    if (!estudianteActivo) return;
+    const mats = MATERIAS[estudianteActivo.carrera] || [];
+    const tmp  = {};
+    mats.forEach(mat => {
+        const key = mat.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+        tmp[mat]  = { b1: getN(key,'b1'), b2: getN(key,'b2'), b3: getN(key,'b3'), b4: getN(key,'b4') };
+    });
+
+    const { aprob, reprob, promG, estado, literal, obs } = calcularEstado(estudianteActivo.carrera, tmp);
+    const cls = { APROBADO:'resumen-aprobado', SEGUNDO_TURNO:'resumen-segundo', REPROBADO:'resumen-reprobado', SIN_NOTAS:'resumen-aprobado' }[estado];
+    const pt  = promG !== null ? promG.toFixed(2) : '—';
+
+    document.getElementById('resumen-final').innerHTML = `
+    <div class="resumen-box ${cls}">
+        <div class="resumen-title">${literal}</div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:${obs?'12px':'0'}">
+            <div><span style="color:var(--text2);font-size:.78rem;display:block">PROMEDIO GENERAL</span>
+                 <strong style="font-size:1.5rem">${pt}</strong></div>
+            <div><span style="color:var(--text2);font-size:.78rem;display:block">APROBADAS</span>
+                 <strong style="font-size:1.5rem;color:var(--success)">${aprob}</strong></div>
+            <div><span style="color:var(--text2);font-size:.78rem;display:block">REPROBADAS</span>
+                 <strong style="font-size:1.5rem;color:${reprob>0?'var(--danger)':'var(--text2)'}">${reprob}</strong></div>
+        </div>
+        ${obs ? `<div style="margin-top:10px;padding:12px 16px;background:rgba(0,0,0,.2);border-radius:8px;font-size:.84rem;line-height:1.6">
+            <strong>📋 Observaciones:</strong> ${obs}
+        </div>` : ''}
+    </div>`;
+}
+
+// ── GUARDAR NOTAS ──────────────────────────────────────────────
+function guardarNotas() {
+    if (!estudianteActivo) return;
+    const mats = MATERIAS[estudianteActivo.carrera] || [];
+    if (!estudianteActivo.notas) estudianteActivo.notas = {};
+    mats.forEach(mat => {
+        const key = mat.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+        estudianteActivo.notas[mat] = { b1:getN(key,'b1'), b2:getN(key,'b2'), b3:getN(key,'b3'), b4:getN(key,'b4') };
+    });
+    const i = estudiantes.findIndex(e => e.ci === estudianteActivo.ci);
+    if (i !== -1) estudiantes[i] = estudianteActivo;
+    save();
+    filtrarEstudiantes();
+    closeModal('modal-notas');
+    toast('✅ Calificaciones guardadas');
+}
+
+// ── ELIMINAR ESTUDIANTE ────────────────────────────────────────
+function eliminarEst(ci) {
+    if (!confirm(`¿Eliminar al estudiante CI: ${ci}?`)) return;
+    estudiantes = estudiantes.filter(e => e.ci !== ci);
+    save();
+    filtrarEstudiantes();
+    toast('🗑 Estudiante eliminado');
+}
+
+// ── NUEVO ESTUDIANTE ───────────────────────────────────────────
+function openModalNuevoEstudiante() {
+    ['new-ci','new-nombre','new-apPat','new-apMat','new-celular','new-email'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('alert-nuevo-est').innerHTML = '';
+    openModal('modal-nuevo-estudiante');
+}
+
+function guardarNuevoEstudiante() {
+    const ci     = document.getElementById('new-ci').value.trim();
+    const nombre = document.getElementById('new-nombre').value.trim();
+    const apPat  = document.getElementById('new-apPat').value.trim();
+    const alertEl = document.getElementById('alert-nuevo-est');
+
+    if (!ci || !nombre || !apPat) {
+        alertEl.innerHTML = '<div class="alert alert-danger">⚠️ Complete CI, Nombre y Apellido Paterno.</div>'; return;
+    }
+    if (estudiantes.find(e => e.ci === ci)) {
+        alertEl.innerHTML = '<div class="alert alert-danger">❌ Ya existe un estudiante con ese CI.</div>'; return;
+    }
+
+    estudiantes.push({
+        ci, nombre, apPat,
+        apMat:   document.getElementById('new-apMat').value.trim(),
+        carrera: document.getElementById('new-carrera').value,
+        turno:   document.getElementById('new-turno').value,
+        celular: document.getElementById('new-celular').value.trim(),
+        email:   document.getElementById('new-email').value.trim(),
+        notas:   {}
+    });
+    save();
+    filtrarEstudiantes();
+    closeModal('modal-nuevo-estudiante');
+    toast('✅ Estudiante registrado');
+}
+
+// ── DOCENTES ───────────────────────────────────────────────────
+function openModalDocente() {
+    ['doc-ci','doc-nombre','doc-apPat','doc-apMat','doc-especialidad','doc-email','doc-celular','doc-titulo']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('alert-docente').innerHTML = '';
+    openModal('modal-docente');
+}
+
+function guardarDocente() {
+    const ci    = document.getElementById('doc-ci').value.trim();
+    const nom   = document.getElementById('doc-nombre').value.trim();
+    const apP   = document.getElementById('doc-apPat').value.trim();
+    const email = document.getElementById('doc-email').value.trim();
+    const espec = document.getElementById('doc-especialidad').value.trim();
+    const alertEl = document.getElementById('alert-docente');
+
+    if (!ci || !nom || !apP || !email || !espec) {
+        alertEl.innerHTML = '<div class="alert alert-danger">⚠️ Complete todos los campos obligatorios (*).</div>'; return;
+    }
+    if (docentes.find(d => d.ci === ci)) {
+        alertEl.innerHTML = '<div class="alert alert-danger">❌ Ya existe un docente con ese CI.</div>'; return;
+    }
+
+    docentes.push({
+        ci, nombre: nom, apPat: apP,
+        apMat:       document.getElementById('doc-apMat').value.trim(),
+        especialidad: espec,
+        materia:     document.getElementById('doc-materia').value,
+        email,
+        celular:     document.getElementById('doc-celular').value.trim(),
+        titulo:      document.getElementById('doc-titulo').value.trim(),
+    });
+    save();
+    renderDocentes();
+    closeModal('modal-docente');
+    toast('✅ Docente registrado');
+}
+
+function renderDocentes() {
+    const grid = document.getElementById('grid-docentes');
+    if (!docentes.length) {
+        grid.innerHTML = `<div style="color:var(--text2);padding:40px;grid-column:1/-1;text-align:center;font-size:.9rem">
+            No hay docentes. Haz clic en <strong>Agregar Docente</strong>.
+        </div>`;
+        return;
+    }
+    grid.innerHTML = docentes.map((d, i) => `
+    <div class="docente-card">
+        <div class="docente-avatar">👩‍🏫</div>
+        <div class="docente-name">${d.nombre} ${d.apPat} ${d.apMat || ''}</div>
+        <div class="docente-esp">${d.titulo || d.especialidad}</div>
+        <span class="badge badge-purple">${d.materia}</span>
+        <div class="docente-info" style="margin-top:12px">📧 ${d.email}</div>
+        ${d.celular ? `<div class="docente-info">📱 ${d.celular}</div>` : ''}
+        <div class="docente-info">🪪 CI: ${d.ci}</div>
+        <div style="margin-top:14px">
+            <button class="btn btn-danger btn-sm" onclick="elimDocente(${i})">🗑 Eliminar</button>
+        </div>
+    </div>`).join('');
+}
+
+function elimDocente(i) {
+    if (!confirm('¿Eliminar este docente?')) return;
+    docentes.splice(i, 1);
+    save();
+    renderDocentes();
+    toast('🗑 Docente eliminado');
+}
+
+// ── REPORTE ────────────────────────────────────────────────────
+function renderReporte() {
+    const gestion = document.getElementById('filtro-gestion').value;
+    document.getElementById('reporte-gestion').textContent = gestion;
+    const tbody = document.getElementById('tbody-reporte');
+    tbody.innerHTML = '';
+
+    estudiantes.forEach(est => {
+        const mats = MATERIAS[est.carrera] || [];
+        const { aprob, reprob, promG, estado, literal, obs } = calcularEstado(est.carrera, est.notas || {});
+        const bc = { APROBADO:'badge-green', SEGUNDO_TURNO:'badge-yellow', REPROBADO:'badge-red', SIN_NOTAS:'badge-blue' }[estado];
+        const pt = promG !== null ? promG.toFixed(2) : '—';
+
+        tbody.innerHTML += `
+        <tr>
+            <td style="font-family:monospace;font-weight:700">${est.ci}</td>
+            <td><strong>${est.nombre} ${est.apPat} ${est.apMat||''}</strong></td>
+            <td>${CARRERA_NOMBRE[est.carrera]||est.carrera}</td>
+            <td>${est.turno}</td>
+            <td>${mats.length}</td>
+            <td style="color:var(--success);font-weight:700">${aprob}</td>
+            <td style="color:${reprob>0?'var(--danger)':'var(--text2)'};font-weight:700">${reprob}</td>
+            <td style="font-weight:800;color:${promG!==null&&promG>=NOTA_MINIMA?'var(--success)':'var(--danger)'}">${pt}</td>
+            <td><span class="badge ${bc}">${literal}</span></td>
+            <td style="font-size:.79rem;color:var(--text2);max-width:240px">${obs||'—'}</td>
+        </tr>`;
+    });
+}
+
+// ── TOAST ──────────────────────────────────────────────────────
+function toast(msg) {
+    const el = document.createElement('div');
+    el.style.cssText = `position:fixed;bottom:28px;right:28px;z-index:9999;
+        background:var(--surface);border:1px solid var(--border);
+        padding:14px 22px;border-radius:12px;font-size:.88rem;
+        font-family:'Inter',sans-serif;color:var(--text);
+        box-shadow:0 8px 30px rgba(0,0,0,.4);animation:fadeUp .3s ease`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+renderEstudiantes();
+renderDocentes();
+</script>
+</body>
+</html>

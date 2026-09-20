@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama Entidad-Relación - Base de Datos INST</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+        .diagram-container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+        svg {
+            display: block;
+            margin: 0 auto;
+            min-width: 1600px;
+        }
+        .entidad {
+            fill: #f1c40f;
+            stroke: #b7950b;
+            stroke-width: 2;
+        }
+        .entidad-texto {
+            fill: #1a1a1a;
+            font-size: 14px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .atributo {
+            fill: #ffffff;
+            stroke: #2980b9;
+            stroke-width: 1.8;
+        }
+        .atributo-texto {
+            fill: #2c3e50;
+            font-size: 11px;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .pk {
+            stroke: #e67e22;
+            stroke-width: 2.5;
+        }
+        .pk-texto {
+            text-decoration: underline;
+        }
+        .relacion {
+            fill: #5dade2;
+            stroke: #2874a6;
+            stroke-width: 2;
+        }
+        .relacion-texto {
+            fill: #ffffff;
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .linea {
+            stroke: #34495e;
+            stroke-width: 1.8;
+            fill: none;
+        }
+        .linea-atributo {
+            stroke: #7f8c8d;
+            stroke-width: 1.2;
+            fill: none;
+        }
+        .cardinalidad {
+            fill: #c0392b;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .nota {
+            margin-top: 25px;
+            color: #555;
+            font-size: 0.9em;
+            text-align: center;
+            max-width: 900px;
+            line-height: 1.6;
+        }
+        .leyenda {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+            font-size: 0.85em;
+        }
+        .leyenda-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #999;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📚 Diagrama Entidad-Relación</h1>
+    <p class="subtitle">Base de Datos: <strong>inst</strong> — Sistema Académico del Instituto</p>
+
+    <div class="diagram-container">
+        <svg viewBox="0 0 1700 1400" xmlns="http://www.w3.org/2000/svg">
+            <!-- ============================================================ -->
+            <!-- DEFINICIONES DE FLECHAS -->
+            <!-- ============================================================ -->
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L9,3 z" fill="#34495e"/>
+                </marker>
+            </defs>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: ESTUDIANTE -->
+            <!-- ============================================================ -->
+            <rect x="50" y="100" width="160" height="60" rx="8" class="entidad"/>
+            <text x="130" y="130" class="entidad-texto">ESTUDIANTE</text>
+
+            <!-- Atributos Estudiante -->
+            <ellipse cx="50" cy="40" rx="55" ry="20" class="atributo pk"/>
+            <text x="50" y="40" class="atributo-texto pk-texto">CI</text>
+            <line x1="50" y1="60" x2="90" y2="100" class="linea-atributo"/>
+
+            <ellipse cx="160" cy="30" rx="55" ry="20" class="atributo"/>
+            <text x="160" y="30" class="atributo-texto">Nombre</text>
+            <line x1="160" y1="50" x2="140" y2="100" class="linea-atributo"/>
+
+            <ellipse cx="280" cy="40" rx="55" ry="20" class="atributo"/>
+            <text x="280" y="40" class="atributo-texto">Ap. Paterno</text>
+            <line x1="270" y1="60" x2="200" y2="100" class="linea-atributo"/>
+
+            <ellipse cx="370" cy="80" rx="55" ry="20" class="atributo"/>
+            <text x="370" y="80" class="atributo-texto">Ap. Materno</text>
+            <line x1="340" y1="95" x2="210" y2="110" class="linea-atributo"/>
+
+            <ellipse cx="30" cy="180" rx="55" ry="20" class="atributo"/>
+            <text x="30" y="180" class="atributo-texto">Celular</text>
+            <line x1="60" y1="165" x2="80" y2="160" class="linea-atributo"/>
+
+            <ellipse cx="160" cy="200" rx="55" ry="20" class="atributo"/>
+            <text x="160" y="200" class="atributo-texto">Tipo</text>
+            <line x1="150" y1="180" x2="140" y2="160" class="linea-atributo"/>
+
+            <ellipse cx="280" cy="190" rx="60" ry="20" class="atributo"/>
+            <text x="280" y="190" class="atributo-texto">Estado Acad.</text>
+            <line x1="240" y1="175" x2="200" y2="160" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: CARRERA -->
+            <!-- ============================================================ -->
+            <rect x="600" y="80" width="150" height="60" rx="8" class="entidad"/>
+            <text x="675" y="110" class="entidad-texto">CARRERA</text>
+
+            <ellipse cx="600" cy="30" rx="55" ry="20" class="atributo pk"/>
+            <text x="600" y="30" class="atributo-texto pk-texto">ID</text>
+            <line x1="610" y1="50" x2="640" y2="80" class="linea-atributo"/>
+
+            <ellipse cx="720" cy="30" rx="60" ry="20" class="atributo"/>
+            <text x="720" y="30" class="atributo-texto">Nombre</text>
+            <line x1="710" y1="50" x2="690" y2="80" class="linea-atributo"/>
+
+            <ellipse cx="840" cy="50" rx="60" ry="20" class="atributo"/>
+            <text x="840" y="50" class="atributo-texto">Resolución</text>
+            <line x1="810" y1="65" x2="750" y2="90" class="linea-atributo"/>
+
+            <ellipse cx="560" cy="180" rx="60" ry="20" class="atributo"/>
+            <text x="560" y="180" class="atributo-texto">Duración</text>
+            <line x1="600" y1="165" x2="620" y2="140" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: ASIGNATURA -->
+            <!-- ============================================================ -->
+            <rect x="1100" y="100" width="160" height="60" rx="8" class="entidad"/>
+            <text x="1180" y="130" class="entidad-texto">ASIGNATURA</text>
+
+            <ellipse cx="1080" cy="40" rx="55" ry="20" class="atributo pk"/>
+            <text x="1080" y="40" class="atributo-texto pk-texto">Código</text>
+            <line x1="1090" y1="60" x2="1130" y2="100" class="linea-atributo"/>
+
+            <ellipse cx="1200" cy="30" rx="55" ry="20" class="atributo"/>
+            <text x="1200" y="30" class="atributo-texto">Nombre</text>
+            <line x1="1190" y1="50" x2="1180" y2="100" class="linea-atributo"/>
+
+            <ellipse cx="1310" cy="50" rx="50" ry="20" class="atributo"/>
+            <text x="1310" y="50" class="atributo-texto">Horas</text>
+            <line x1="1280" y1="65" x2="1240" y2="100" class="linea-atributo"/>
+
+            <ellipse cx="1060" cy="190" rx="50" ry="20" class="atributo"/>
+            <text x="1060" y="190" class="atributo-texto">Nivel</text>
+            <line x1="1090" y1="175" x2="1120" y2="160" class="linea-atributo"/>
+
+            <ellipse cx="1200" cy="200" rx="60" ry="20" class="atributo"/>
+            <text x="1200" y="200" class="atributo-texto">Prereq.</text>
+            <line x1="1180" y1="185" x2="1170" y2="160" class="linea-atributo"/>
+
+            <ellipse cx="1320" cy="180" rx="55" ry="20" class="atributo"/>
+            <text x="1320" y="180" class="atributo-texto">Hora</text>
+            <line x1="1290" y1="170" x2="1250" y2="160" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- RELACIÓN: ESTUDIA (Estudiante - Asignatura) -->
+            <!-- ============================================================ -->
+            <polygon points="650,300 710,350 650,400 590,350" class="relacion"/>
+            <text x="650" y="350" class="relacion-texto">ESTUDIA</text>
+
+            <!-- Línea Estudiante - ESTUDIA -->
+            <line x1="210" y1="140" x2="590" y2="350" class="linea" marker-end="url(#arrow)"/>
+            <text x="350" y="230" class="cardinalidad">(0,n)</text>
+
+            <!-- Línea ESTUDIA - Asignatura -->
+            <line x1="710" y1="350" x2="1100" y2="140" class="linea" marker-end="url(#arrow)"/>
+            <text x="950" y="230" class="cardinalidad">(1,n)</text>
+
+            <!-- Atributo de relación ESTUDIA -->
+            <ellipse cx="650" cy="460" rx="65" ry="20" class="atributo"/>
+            <text x="650" y="460" class="atributo-texto">Fecha Insc.</text>
+            <line x1="650" y1="400" x2="650" y2="440" class="linea-atributo"/>
+
+            <ellipse cx="800" cy="460" rx="55" ry="20" class="atributo"/>
+            <text x="800" y="460" class="atributo-texto">Nota Final</text>
+            <line x1="720" y1="380" x2="770" y2="440" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: DOCENTE -->
+            <!-- ============================================================ -->
+            <rect x="50" y="550" width="150" height="60" rx="8" class="entidad"/>
+            <text x="125" y="580" class="entidad-texto">DOCENTE</text>
+
+            <ellipse cx="40" cy="500" rx="55" ry="20" class="atributo pk"/>
+            <text x="40" y="500" class="atributo-texto pk-texto">CI</text>
+            <line x1="50" y1="520" x2="80" y2="550" class="linea-atributo"/>
+
+            <ellipse cx="160" cy="490" rx="55" ry="20" class="atributo"/>
+            <text x="160" y="490" class="atributo-texto">Nombre</text>
+            <line x1="150" y1="510" x2="140" y2="550" class="linea-atributo"/>
+
+            <ellipse cx="280" cy="510" rx="55" ry="20" class="atributo"/>
+            <text x="280" y="510" class="atributo-texto">Ap. Paterno</text>
+            <line x1="260" y1="525" x2="190" y2="555" class="linea-atributo"/>
+
+            <ellipse cx="30" cy="650" rx="60" ry="20" class="atributo"/>
+            <text x="30" y="650" class="atributo-texto">Especialidad</text>
+            <line x1="60" y1="635" x2="80" y2="610" class="linea-atributo"/>
+
+            <ellipse cx="180" cy="670" rx="55" ry="20" class="atributo"/>
+            <text x="180" y="670" class="atributo-texto">Email</text>
+            <line x1="160" y1="655" x2="140" y2="610" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- RELACIÓN: IMPARTE (Docente - Asignatura) -->
+            <!-- ============================================================ -->
+            <polygon points="600,600 660,650 600,700 540,650" class="relacion"/>
+            <text x="600" y="650" class="relacion-texto">IMPARTE</text>
+
+            <line x1="200" y1="580" x2="540" y2="650" class="linea" marker-end="url(#arrow)"/>
+            <text x="370" y="600" class="cardinalidad">(1,n)</text>
+
+            <line x1="660" y1="650" x2="1100" y2="150" class="linea" marker-end="url(#arrow)"/>
+            <text x="880" y="400" class="cardinalidad">(1,n)</text>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: INSCRIPCION -->
+            <!-- ============================================================ -->
+            <rect x="50" y="800" width="170" height="60" rx="8" class="entidad"/>
+            <text x="135" y="830" class="entidad-texto">INSCRIPCIÓN</text>
+
+            <ellipse cx="40" cy="750" rx="50" ry="20" class="atributo pk"/>
+            <text x="40" y="750" class="atributo-texto pk-texto">ID</text>
+            <line x1="50" y1="770" x2="80" y2="800" class="linea-atributo"/>
+
+            <ellipse cx="180" cy="740" rx="55" ry="20" class="atributo"/>
+            <text x="180" y="740" class="atributo-texto">Fecha</text>
+            <line x1="170" y1="760" x2="150" y2="800" class="linea-atributo"/>
+
+            <ellipse cx="300" cy="770" rx="55" ry="20" class="atributo"/>
+            <text x="300" y="770" class="atributo-texto">Turno</text>
+            <line x1="280" y1="780" x2="220" y2="810" class="linea-atributo"/>
+
+            <ellipse cx="30" cy="900" rx="55" ry="20" class="atributo"/>
+            <text x="30" y="900" class="atributo-texto">Gestión</text>
+            <line x1="60" y1="885" x2="80" y2="860" class="linea-atributo"/>
+
+            <ellipse cx="190" cy="920" rx="60" ry="20" class="atributo"/>
+            <text x="190" y="920" class="atributo-texto">Estado Final</text>
+            <line x1="170" y1="905" x2="140" y2="860" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- RELACIÓN: GENERA (Inscripción - Historial) -->
+            <!-- ============================================================ -->
+            <polygon points="600,820 660,870 600,920 540,870" class="relacion"/>
+            <text x="600" y="870" class="relacion-texto">GENERA</text>
+
+            <line x1="220" y1="830" x2="540" y2="870" class="linea" marker-end="url(#arrow)"/>
+            <text x="380" y="840" class="cardinalidad">(1,1)</text>
+
+            <line x1="660" y1="870" x2="1100" y2="870" class="linea" marker-end="url(#arrow)"/>
+            <text x="880" y="860" class="cardinalidad">(1,n)</text>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: HISTORIAL -->
+            <!-- ============================================================ -->
+            <rect x="1100" y="840" width="150" height="60" rx="8" class="entidad"/>
+            <text x="1175" y="870" class="entidad-texto">HISTORIAL</text>
+
+            <ellipse cx="1080" cy="790" rx="50" ry="20" class="atributo pk"/>
+            <text x="1080" y="790" class="atributo-texto pk-texto">ID</text>
+            <line x1="1090" y1="810" x2="1120" y2="840" class="linea-atributo"/>
+
+            <ellipse cx="1200" cy="780" rx="55" ry="20" class="atributo"/>
+            <text x="1200" y="780" class="atributo-texto">Nota</text>
+            <line x1="1190" y1="800" x2="1180" y2="840" class="linea-atributo"/>
+
+            <ellipse cx="1320" cy="800" rx="60" ry="20" class="atributo"/>
+            <text x="1320" y="800" class="atributo-texto">Literal</text>
+            <line x1="1290" y1="810" x2="1250" y2="845" class="linea-atributo"/>
+
+            <ellipse cx="1060" cy="940" rx="55" ry="20" class="atributo"/>
+            <text x="1060" y="940" class="atributo-texto">Estado</text>
+            <line x1="1090" y1="925" x2="1120" y2="900" class="linea-atributo"/>
+
+            <ellipse cx="1200" cy="960" rx="65" ry="20" class="atributo"/>
+            <text x="1200" y="960" class="atributo-texto">Tipo Est.</text>
+            <line x1="1180" y1="945" x2="1170" y2="900" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: PAGO_MATRICULA -->
+            <!-- ============================================================ -->
+            <rect x="50" y="1050" width="170" height="60" rx="8" class="entidad"/>
+            <text x="135" y="1080" class="entidad-texto">PAGO MATRÍCULA</text>
+
+            <ellipse cx="40" cy="1000" rx="50" ry="20" class="atributo pk"/>
+            <text x="40" y="1000" class="atributo-texto pk-texto">ID</text>
+            <line x1="50" y1="1020" x2="80" y2="1050" class="linea-atributo"/>
+
+            <ellipse cx="190" cy="990" rx="60" ry="20" class="atributo"/>
+            <text x="190" y="990" class="atributo-texto">Nro. Comp.</text>
+            <line x1="180" y1="1010" x2="150" y2="1050" class="linea-atributo"/>
+
+            <ellipse cx="310" cy="1020" rx="50" ry="20" class="atributo"/>
+            <text x="310" y="1020" class="atributo-texto">Monto</text>
+            <line x1="290" y1="1030" x2="220" y2="1060" class="linea-atributo"/>
+
+            <ellipse cx="30" cy="1140" rx="55" ry="20" class="atributo"/>
+            <text x="30" y="1140" class="atributo-texto">Fecha Pago</text>
+            <line x1="60" y1="1125" x2="80" y2="1110" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- RELACIÓN: REALIZA (Estudiante - Pago) -->
+            <!-- ============================================================ -->
+            <polygon points="450,1000 510,1050 450,1100 390,1050" class="relacion"/>
+            <text x="450" y="1050" class="relacion-texto">REALIZA</text>
+
+            <line x1="210" y1="160" x2="390" y2="1050" class="linea" marker-end="url(#arrow)"/>
+            <text x="280" y="600" class="cardinalidad">(1,n)</text>
+
+            <line x1="510" y1="1050" x2="220" y2="1080" class="linea" marker-end="url(#arrow)"/>
+            <text x="380" y="1080" class="cardinalidad">(1,1)</text>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: USUARIO -->
+            <!-- ============================================================ -->
+            <rect x="700" y="1050" width="150" height="60" rx="8" class="entidad"/>
+            <text x="775" y="1080" class="entidad-texto">USUARIO</text>
+
+            <ellipse cx="680" cy="1000" rx="50" ry="20" class="atributo pk"/>
+            <text x="680" y="1000" class="atributo-texto pk-texto">ID</text>
+            <line x1="690" y1="1020" x2="720" y2="1050" class="linea-atributo"/>
+
+            <ellipse cx="820" cy="990" rx="55" ry="20" class="atributo"/>
+            <text x="820" y="990" class="atributo-texto">Usuario</text>
+            <line x1="810" y1="1010" x2="790" y2="1050" class="linea-atributo"/>
+
+            <ellipse cx="930" cy="1020" rx="55" ry="20" class="atributo"/>
+            <text x="930" y="1020" class="atributo-texto">Clave</text>
+            <line x1="900" y1="1030" x2="850" y2="1060" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- RELACIÓN: TIENE (Usuario - Rol) -->
+            <!-- ============================================================ -->
+            <polygon points="1150,1050 1210,1100 1150,1150 1090,1100" class="relacion"/>
+            <text x="1150" y="1100" class="relacion-texto">TIENE</text>
+
+            <line x1="850" y1="1080" x2="1090" y2="1100" class="linea" marker-end="url(#arrow)"/>
+            <text x="970" y="1080" class="cardinalidad">(1,1)</text>
+
+            <line x1="1210" y1="1100" x2="1400" y2="1100" class="linea" marker-end="url(#arrow)"/>
+            <text x="1300" y="1090" class="cardinalidad">(1,n)</text>
+
+            <!-- ============================================================ -->
+            <!-- ENTIDAD: ROL -->
+            <!-- ============================================================ -->
+            <rect x="1400" y="1070" width="100" height="60" rx="8" class="entidad"/>
+            <text x="1450" y="1100" class="entidad-texto">ROL</text>
+
+            <!-- Atributo PK: ID -->
+            <ellipse cx="1400" cy="1020" rx="50" ry="20" class="atributo pk"/>
+            <text x="1400" y="1020" class="atributo-texto pk-texto">ID</text>
+            <line x1="1410" y1="1040" x2="1430" y2="1070" class="linea-atributo"/>
+
+            <!-- Atributo: Nombre -->
+            <ellipse cx="1520" cy="1010" rx="55" ry="20" class="atributo"/>
+            <text x="1520" y="1010" class="atributo-texto">Nombre</text>
+            <line x1="1500" y1="1025" x2="1470" y2="1075" class="linea-atributo"/>
+
+            <!-- Atributo: Descripción -->
+            <ellipse cx="1620" cy="1070" rx="60" ry="20" class="atributo"/>
+            <text x="1620" y="1070" class="atributo-texto">Descripción</text>
+            <line x1="1590" y1="1075" x2="1500" y2="1090" class="linea-atributo"/>
+
+            <!-- Atributo: Permisos -->
+            <ellipse cx="1610" cy="1130" rx="55" ry="20" class="atributo"/>
+            <text x="1610" y="1130" class="atributo-texto">Permisos</text>
+            <line x1="1580" y1="1125" x2="1500" y2="1115" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- VALORES DISCRIMINADOS DEL ROL (jerarquía)                   -->
+            <!-- ============================================================ -->
+
+            <!-- Línea vertical desde ROL hacia valores -->
+            <line x1="1450" y1="1130" x2="1450" y2="1185" class="linea" stroke-dasharray="6,4"/>
+            <line x1="1250" y1="1185" x2="1650" y2="1185" class="linea" stroke-dasharray="6,4"/>
+
+            <!-- Línea hacia Admin -->
+            <line x1="1250" y1="1185" x2="1250" y2="1215" class="linea" stroke-dasharray="6,4"/>
+            <!-- Línea hacia Estudiante -->
+            <line x1="1450" y1="1185" x2="1450" y2="1215" class="linea" stroke-dasharray="6,4"/>
+            <!-- Línea hacia Profesor -->
+            <line x1="1650" y1="1185" x2="1650" y2="1215" class="linea" stroke-dasharray="6,4"/>
+
+            <!-- ROL: Admin -->
+            <rect x="1175" y="1215" width="150" height="55" rx="8" style="fill:#e8f4fd;stroke:#2980b9;stroke-width:2"/>
+            <text x="1250" y="1246" class="entidad-texto" style="fill:#154360;font-size:12px">Admin</text>
+
+            <!-- Atributos Admin -->
+            <ellipse cx="1145" cy="1310" rx="55" ry="18" class="atributo"/>
+            <text x="1145" y="1310" class="atributo-texto">Acceso Total</text>
+            <line x1="1185" y1="1295" x2="1205" y2="1270" class="linea-atributo"/>
+            <ellipse cx="1270" cy="1325" rx="55" ry="18" class="atributo"/>
+            <text x="1270" y="1325" class="atributo-texto">Config. Sys</text>
+            <line x1="1255" y1="1307" x2="1245" y2="1270" class="linea-atributo"/>
+
+            <!-- ROL: Estudiante -->
+            <rect x="1375" y="1215" width="150" height="55" rx="8" style="fill:#eafaf1;stroke:#27ae60;stroke-width:2"/>
+            <text x="1450" y="1246" class="entidad-texto" style="fill:#1a5632;font-size:12px">Estudiante</text>
+
+            <!-- Atributos Estudiante -->
+            <ellipse cx="1395" cy="1320" rx="55" ry="18" class="atributo"/>
+            <text x="1395" y="1320" class="atributo-texto">Ver Notas</text>
+            <line x1="1410" y1="1302" x2="1420" y2="1270" class="linea-atributo"/>
+            <ellipse cx="1510" cy="1320" rx="55" ry="18" class="atributo"/>
+            <text x="1510" y="1320" class="atributo-texto">Inscripción</text>
+            <line x1="1492" y1="1302" x2="1480" y2="1270" class="linea-atributo"/>
+
+            <!-- ============================================================ -->
+            <!-- ROL: PROFESOR (nuevo)                                        -->
+            <!-- ============================================================ -->
+            <rect x="1570" y="1215" width="160" height="55" rx="8"
+                  style="fill:#fdf2f8;stroke:#8e44ad;stroke-width:2.5"/>
+            <!-- Doble borde para enfatizar -->
+            <rect x="1574" y="1219" width="152" height="47" rx="6"
+                  style="fill:none;stroke:#8e44ad;stroke-width:1;opacity:.5"/>
+            <text x="1650" y="1246" class="entidad-texto" style="fill:#5b2c6f;font-size:13px">👨‍🏫 Profesor</text>
+
+            <!-- Atributos del rol Profesor -->
+            <ellipse cx="1565" cy="1320" rx="60" ry="18" class="atributo" style="stroke:#8e44ad;stroke-width:1.5"/>
+            <text x="1565" y="1320" class="atributo-texto" style="fill:#6c3483">Cargar Notas</text>
+            <line x1="1585" y1="1302" x2="1595" y2="1270" class="linea-atributo"/>
+
+            <ellipse cx="1685" cy="1310" rx="60" ry="18" class="atributo" style="stroke:#8e44ad;stroke-width:1.5"/>
+            <text x="1685" y="1310" class="atributo-texto" style="fill:#6c3483">Ver Alumnos</text>
+            <line x1="1680" y1="1292" x2="1675" y2="1270" class="linea-atributo"/>
+
+            <ellipse cx="1615" cy="1360" rx="65" ry="18" class="atributo" style="stroke:#8e44ad;stroke-width:1.5"/>
+            <text x="1615" y="1360" class="atributo-texto" style="fill:#6c3483">Impartir Clase</text>
+            <line x1="1620" y1="1342" x2="1625" y2="1305" class="linea-atributo"/>
+
+            <!-- Etiqueta «nuevo» sobre el rol Profesor -->
+            <rect x="1690" y="1208" width="46" height="18" rx="4" style="fill:#8e44ad"/>
+            <text x="1713" y="1220" style="fill:#fff;font-size:9px;font-weight:bold;text-anchor:middle">NUEVO</text>
+
+        </svg>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="leyenda">
+        <div class="leyenda-item">
+            <div class="color-box" style="background:#f1c40f;"></div>
+            <span>Entidad</span>
+        </div>
+        <div class="leyenda-item">
+            <div class="color-box" style="background:#ffffff; border:2px solid #2980b9;"></div>
+            <span>Atributo</span>
+        </div>
+        <div class="leyenda-item">
+            <div class="color-box" style="background:#5dade2;"></div>
+            <span>Relación</span>
+        </div>
+        <div class="leyenda-item">
+            <div class="color-box" style="background:#ffffff; border:2px solid #e67e22;"></div>
+            <span>Atributo Clave (PK)</span>
+        </div>
+    </div>
+
+    <p class="nota">
+        <strong>Nota:</strong> El diagrama representa las entidades principales del sistema académico <em>inst</em>.
+        Las cardinalidades indican la participación de cada entidad en la relación:
+        <br>
+        <strong>(0,n)</strong> = Cero o muchos &nbsp;|&nbsp;
+        <strong>(1,n)</strong> = Uno o muchos &nbsp;|&nbsp;
+        <strong>(1,1)</strong> = Uno y solo uno.
+        <br>
+        Los atributos subrayados representan claves primarias (PK).
+        Se han omitido algunas relaciones intermedias y atributos secundarios para mantener la claridad visual.
+    </p>
+
+</body>
+</html>
