@@ -1,6 +1,13 @@
 <?php include 'views/header.php'; ?>
 
-<h2 class="mb-4"><i class="bi bi-pencil-square"></i> Gestión de Estudiantes e Inscripciones</h2>
+<!-- CABECERA PRINCIPAL CON BOTÓN DE REPORTE GENERAL -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-pencil-square"></i> Gestión de Estudiantes e Inscripciones</h2>
+    <!-- NUEVO: Botón para generar el PDF con el estado académico general -->
+    <a href="index.php?action=reporte_estudiantes" target="_blank" class="btn btn-danger shadow-sm">
+    <i class="bi bi-file-earmark-pdf-fill"></i> Reporte General Académico PDF
+</a>
+</div>
 
 <?php if (isset($_SESSION['alerta'])): ?>
     <div class="alert alert-<?= $_SESSION['alerta']['tipo'] ?> alert-dismissible fade show">
@@ -9,6 +16,7 @@
     </div>
     <?php unset($_SESSION['alerta']); ?>
 <?php endif; ?>
+
 <!--  NUEVO: Abrir PDF en nueva pestaña si se acaba de registrar un estudiante -->
 <?php if (isset($_SESSION['abrir_pdf_ci'])): ?>
     <div class="alert alert-success alert-dismissible fade show shadow-sm">
@@ -28,7 +36,6 @@
     </div>
     <?php unset($_SESSION['abrir_pdf_ci']); ?>
 <?php endif; ?>
-
 
 <style>
     /* ===== BOTONES VERDES DEGRADADOS ===== */
@@ -108,14 +115,22 @@
     <div class="card-body">
         <form action="index.php" method="GET" class="row g-2 align-items-end">
             <input type="hidden" name="action" value="secretaria_dashboard">
-            <div class="col-md-9">
-                <label class="form-label fw-bold">Buscar Estudiante</label>
+            <div class="col-md-7">
+                <label class="form-label fw-bold">Buscar Estudiante_ </label>Genera reporte individual: <i class="bi bi-file-earmark-pdf-fill"></i> 
                 <input type="text" class="form-control" name="busqueda" placeholder="Escribe nombre, apellido o CI..." 
                        value="<?= isset($_GET['busqueda']) ? htmlspecialchars($_GET['busqueda']) : '' ?>" data-tipo="alfanumerico">
             </div>
-            <div class="col-md-3 d-flex gap-2">
+            <div class="col-md-5 d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-search"></i> Buscar</button>
                 <a href="index.php?action=secretaria_dashboard" class="btn btn-secondary flex-grow-1"><i class="bi bi-x-circle"></i> Limpiar</a>
+                
+                <!-- AGREGAR AQUÍ: BOTÓN DE REPORTE SI HAY UNA BÚSQUEDA POR CI -->
+                <?php if (isset($_GET['busqueda']) && !empty($_GET['busqueda'])): ?>
+                    <a href="index.php?action=reporte_estudiante_gestion&ci=<?= urlencode($_GET['busqueda']) ?>&gestion=2026" 
+                       target="_blank" class="btn btn-danger flex-grow-1">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> PDF CI
+                    </a>
+                <?php endif; ?>
             </div>
         </form>
     </div>
@@ -198,8 +213,8 @@
                         </select>
                         <div class="form-text">Define el año de inscripción según el tipo.</div>
                     </div>
-                    <!-- NUEVOS CAMPOS: TURNO Y PARALELO              -->
-                                 
+                    <!-- NUEVOS CAMPOS: TURNO Y PARALELO -->
+                                         
                     <div class="col-md-4">
                         <label class="form-label "><i class="bi bi-clock"></i> Turno</label>
                         <select class="form-select" name="turno" id="turno_select" required>
@@ -223,9 +238,6 @@
                             <strong>TARDE</strong> → Paralelo <span class="badge bg-success">B</span>
                         </div>
                     </div>
-                    <!-- ============================================ -->
-                    <!-- FIN NUEVOS CAMPOS                            -->
-                    <!-- ============================================ -->
 
                     <div class="col-md-12">
                         <label class="form-label">Fotografía del Estudiante</label>
@@ -286,12 +298,11 @@
                             <?php 
                             $nivel_actual = null;
                             while ($m = mysqli_fetch_assoc($lista_materias)): 
-                                // Mostrar separador de nivel cuando cambia
                                 if ($nivel_actual !== $m['asig_nivel']):
                                     $nivel_actual = $m['asig_nivel'];
                                     $nombre_nivel = ($nivel_actual == 100) ? '1er Año (Nivel 100)' : 
-                                                   (($nivel_actual == 200) ? '2do Año (Nivel 200)' : 
-                                                   (($nivel_actual == 300) ? '3er Año (Nivel 300)' : 'Nivel ' . $nivel_actual));
+                                                    (($nivel_actual == 200) ? '2do Año (Nivel 200)' : 
+                                                    (($nivel_actual == 300) ? '3er Año (Nivel 300)' : 'Nivel ' . $nivel_actual));
                                     $color_nivel = ($nivel_actual == 100) ? 'bg-primary' : 
                                                   (($nivel_actual == 200) ? 'bg-success' : 'bg-warning');
                             ?>
@@ -340,7 +351,7 @@
                 <strong><i class="bi bi-bar-chart-fill"></i> Resumen de Inscripción:</strong><br>
                 <span class="badge bg-primary">1er Año (Nivel 100): <?= $total_nivel_100 ?> materias</span>
                 <span class="badge bg-success ms-2">2do Año (Nivel 200): <?= $total_nivel_200 ?> materias</span>
-                <span class="badge bg-dark ms-2">Total: <?= ($total_nivel_100 + $total_nivel_200) ?> materias</span>
+                <span class="badge bg-dark ms-2">Total: <?= ($total_nivel_100 +$total_nivel_200) ?> materias</span>
             </div>
         </div>
     </div>
@@ -364,18 +375,19 @@
                         <th>Nombre Completo</th>
                         <th>Carrera</th>
                         <th class="text-center">Tipo</th>
+                        <!-- NUEVA COLUMNA: ESTADO ACADÉMICO -->
+                        <th class="text-center">Estado Académico</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php 
-                    $texto_busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
-                    $resultado_lista = !empty($texto_busqueda) ? buscar_estudiantes($conn, $texto_busqueda) : listar_estudiantes($conn);
+                    $texto_busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';$resultado_lista = !empty($texto_busqueda) ? buscar_estudiantes($conn, $texto_busqueda) : listar_estudiantes($conn);
                     
                     if (mysqli_num_rows($resultado_lista) > 0):
                         while ($e = mysqli_fetch_assoc($resultado_lista)): 
                             
-                            if (!empty($e['img']) && file_exists(__DIR__ . '/../' . $e['img'])) {
+                            if (!empty($e['img']) && file_exists(__DIR__ . '/../' .$e['img'])) {
                                 $url_foto = htmlspecialchars($e['img']);
                             } else {
                                 $iniciales = strtoupper(substr($e['nombre'], 0, 1) . substr($e['ap_pat'], 0, 1));
@@ -383,14 +395,23 @@
                             }
 
                             $es_inactivo = ($e['activo'] == 0);
-                            $fila_clase = $es_inactivo ? 'table-danger opacity-75' : '';
-                            $badge_estado = $es_inactivo ? '' : '';
+                            $fila_clase =$es_inactivo ? 'table-danger opacity-75' : '';
+                            $badge_estado =$es_inactivo ? '' : '';
                             
-                            //  TIPO DE INSCRIPCIÓN
-                            $tipo_inscripcion = isset($e['tipo']) ? $e['tipo'] : 'N/A';
-                            $clase_badge_tipo = 'bg-secondary';
-                            if ($tipo_inscripcion == 'Regular') $clase_badge_tipo = 'badge-regular';
-                            elseif ($tipo_inscripcion == 'BTH') $clase_badge_tipo = 'badge-bth';
+                            // TIPO DE INSCRIPCIÓN
+                            $tipo_inscripcion = isset($e['tipo']) ? $e['tipo'] : 'N/A';$clase_badge_tipo = 'bg-secondary';
+                            if ($tipo_inscripcion == 'Regular')$clase_badge_tipo = 'badge-regular';
+                            elseif ($tipo_inscripcion == 'BTH')$clase_badge_tipo = 'badge-bth';
+
+                            // NUEVO: EVALUACIÓN ACADÉMICA V2
+                            $eval_acad = function_exists('evaluarCondicionEstudianteV2') ? evaluarCondicionEstudianteV2($conn,$e['ci'], '2026') : null;
+                            $badge_condicion = '<span class="badge bg-secondary">Sin Historial</span>';
+                            if ($eval_acad) {
+                                if ($eval_acad['estado'] == 'APROBADO') {$badge_condicion = '<span class="badge bg-success"><i class="bi bi-check-circle"></i> APROBADO</span>';
+                                } elseif ($eval_acad['estado'] == 'ARRASTRE_TURNO_DISTINTO') {$badge_condicion = '<span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> ARRASTRE ('. $eval_acad['reprobadas'] .')</span>';
+                                } elseif (in_array($eval_acad['estado'], ['REPETIDOR_PARCIAL', 'RETIRADO_REINICIO'])) {$badge_condicion = '<span class="badge bg-danger"><i class="bi bi-x-circle"></i> REPROBADO</span>';
+                                }
+                            }
                     ?>
                         <tr class="<?= $fila_clase ?>">
                             <td class="text-center">
@@ -398,29 +419,37 @@
                             </td>
                             <td><?= htmlspecialchars($e['ci']) ?></td>
                             <td>
-                                <?= htmlspecialchars($e['nombre'] . ' ' . $e['ap_pat'] . ' ' . $e['ap_mat']) ?>
+                                <?= htmlspecialchars($e['nombre'] . ' ' . $e['ap_pat'] . ' ' .$e['ap_mat']) ?>
                                 <?= $badge_estado ?>
                             </td>
                             <td><?= htmlspecialchars($e['carrera_nombre']) ?></td>
                             <td class="text-center">
                                 <span class="badge <?= $clase_badge_tipo ?> text-white"><?= htmlspecialchars($tipo_inscripcion) ?></span>
                             </td>
+                            <!-- MUESTRA EL ESTADO CALCULADO EN LA TABLA -->
+                            <td class="text-center">
+                                <?= $badge_condicion ?>
+                            </td>
                             <td class="text-center">
                                 <div class="d-flex gap-2 justify-content-center">
+                                    <!-- Botón Ver Materias que ya tienes -->
                                     <a href="index.php?action=secretaria_ver_materias&ci=<?= $e['ci'] ?>" class="btn btn-sm btn-info text-white" title="Ver Materias">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     
                                     <?php if (!$es_inactivo): ?>
+                                        <!-- Botón Editar que ya tienes -->
                                         <a href="index.php?action=secretaria_editar&ci=<?= $e['ci'] ?>" class="btn btn-sm btn-warning text-dark" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                      <!--  <a href="index.php?action=secretaria_eliminar&ci=<?= $e['ci'] ?>" 
-                                           class="btn btn-sm btn-danger" 
-                                           title="Dar de baja"
-                                           onclick="return confirm('¿Estás seguro de dar de baja a este estudiante? (Borrado lógico)')">
-                                            <i class="bi bi-trash"></i>
-                                        </a> -->
+
+                                        <!-- AGREGAR AQUÍ: BOTÓN PDF INDIVIDUAL PARA CADA ESTUDIANTE DE LA LISTA -->
+                                        <a href="index.php?action=reporte_estudiante_gestion&ci=<?= $e['ci'] ?>&gestion=2026" 
+                                        target="_blank" 
+                                        class="btn btn-sm btn-danger" 
+                                        title="Descargar Ficha Académica PDF">
+                                            <i class="bi bi-file-earmark-pdf-fill"></i>
+                                        </a>
                                     <?php else: ?>
                                         <span class="text-muted small fst-italic">Sin acciones</span>
                                     <?php endif; ?>
@@ -432,7 +461,7 @@
                     else: 
                     ?>
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
+                            <td colspan="7" class="text-center text-muted py-4">
                                 <i class="bi bi-search" style="font-size: 2rem;"></i><br>
                                 No se encontraron estudiantes con ese criterio.
                             </td>
@@ -506,9 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-  
-    // NUEVO: Auto-asignación de Paralelo según Turno
-  
+    // Auto-asignación de Paralelo según Turno
     const turnoSelect = document.getElementById('turno_select');
     const grupoSelect = document.getElementById('grupo_select');
     
@@ -518,32 +545,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (turno === 'MAÑANA') {
                 grupoSelect.value = 'A';
-                // Opcional: deshabilitar para que no lo cambien
-                // grupoSelect.disabled = true;
-               // mostrarNotificacionTurno('Turno MAÑANA seleccionado → Paralelo A asignado');
             } else if (turno === 'TARDE') {
                 grupoSelect.value = 'B';
-                // grupoSelect.disabled = true;
-               // mostrarNotificacionTurno('Turno TARDE seleccionado → Paralelo B asignado');
             } else {
                 grupoSelect.value = '';
-                // grupoSelect.disabled = false;
             }
         });
-    }
-    
-    function mostrarNotificacionTurno(mensaje) {
-        // Crear notificación flotante temporal
-        const notificacion = document.createElement('div');
-        notificacion.className = 'alert alert-success position-fixed';
-        notificacion.style.cssText = 'top: 80px; right: 20px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease;';
-        notificacion.innerHTML = mensaje;
-        document.body.appendChild(notificacion);
-        
-        setTimeout(() => {
-            notificacion.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => notificacion.remove(), 300);
-        }, 2000);
     }
 });
 
@@ -556,7 +563,6 @@ function validarApellidos() {
     if (ap_pat === '' && ap_mat === '') {
         campo_pat.classList.add('is-invalid');
         campo_mat.classList.add('is-invalid');
-        mostrarAlerta(' DEBE INGRESAR AL MENOS UN APELLIDO (Paterno o Materno)', 'warning');
         return false;
     } else {
         campo_pat.classList.remove('is-invalid');
@@ -591,4 +597,4 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 
-<?php include 'views/footer.php'; ?>
+<?php include 'views/footer.php'; ?>[cite: 3]

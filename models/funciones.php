@@ -862,5 +862,132 @@ function asignar_materia_docente($conn, $id_docente, $cod_asig) {
 }
 
 
+// NUEVA FUNCIÓN: Evaluación académica avanzada de gestión
+function evaluarCondicionEstudianteV2($conexion, $ci_est, $gestion) {
+    $sql = "SELECT h.cod_asig, h.TotalAnual, a.nivel 
+            FROM historial h
+            INNER JOIN asignatura a ON h.cod_asig = a.codigo
+            WHERE h.ci_est = '$ci_est' AND h.gestion = '$gestion'";
+            
+    $res = mysqli_query($conexion, $sql);
+    
+    $total_materias = 0;
+    $aprobadas = 0;
+    $reprobadas = 0;
+    $menores_a_30 = 0;
+    $materias_reprobadas = [];
+    $materias_aprobadas = [];
+
+    while ($r = mysqli_fetch_assoc($res)) {
+        $total_materias++;
+        $nota = (int)$r['TotalAnual'];
+        
+        if ($nota >= 61) {
+            $aprobadas++;
+            $materias_aprobadas[] = $r['cod_asig'];
+        } else {
+            $reprobadas++;
+            $materias_reprobadas[] = $r['cod_asig'];
+            if ($nota < 30) {
+                $menores_a_30++;
+            }
+        }
+    }
+
+    if ($total_materias == 0) {
+        return ['estado' => 'SIN_REGISTROS', 'detalle' => 'No existen notas registradas.'];
+    }
+
+    // 1. APROBADO LIMPIO
+    if ($reprobadas == 0) {
+        return [
+            'estado' => 'APROBADO',
+            'mensaje' => 'Aprobó todas las materias. Promovido al siguiente nivel.',
+            'reprobadas' => 0,
+            'materias_reprobadas' => []
+        ];
+    } 
+    // 2. DERECHO A 2DO TURNO / ARRASTRE (1 a 3 materias)
+    elseif ($reprobadas >= 1 && $reprobadas <= 3) {
+        return [
+            'estado' => 'ARRASTRE_TURNO_DISTINTO',
+            'mensaje' => 'Tiene de 1 a 3 materias reprobadas. Inscribe nuevo nivel y arrastra las reprobadas en un TURNO DISTINTO.',
+            'reprobadas' => $reprobadas,
+            'materias_reprobadas' => $materias_reprobadas
+        ];
+    } 
+    // 3. MÁS DE 3 REPROBADAS
+    else {
+        // Pérdida total por notas menores a 30
+        if ($menores_a_30 > 0) {
+            return [
+                'estado' => 'RETIRADO_REINICIO',
+                'mensaje' => 'Reprobó más de 3 materias con notas menores a 30. Estado RETIRADO. Debe repetir todo el nivel completo.',
+                'reprobadas' => $reprobadas,
+                'materias_reprobadas' => $materias_reprobadas
+            ];
+        } else {
+            return [
+                'estado' => 'REPETIDOR_PARCIAL',
+                'mensaje' => 'Reprobó más de 3 materias. Debe repetir únicamente las materias reprobadas en el MISMO TURNO.',
+                'reprobadas' => $reprobadas,
+                'materias_reprobadas' => $materias_reprobadas
+            ];
+        }
+    }
+}
+
+// =========================================================================
+// NUEVA FUNCIÓN: Validar si la materia cumple con sus Prerrequisitos
+// =========================================================================
+function verificarPrerrequisitoV2($conexion, $ci_est, $cod_asig) {
+    // Buscar si la materia tiene prerrequisito en la tabla 'prerequisito'
+    $sql_prereq = "SELECT cod_req FROM prerequisito WHERE cod_asig = '$cod_asig'";
+    $res_prereq = mysqli_query($conexion, $sql_prereq);
+
+    if (mysqli_num_rows($res_prereq) == 0) {
+        return true; // No requiere prerrequisito
+    }
+
+    while ($req = mysqli_fetch_assoc($res_prereq)) {
+        $cod_req = $req['cod_req'];
+        // Verificar si aprobó el prerrequisito
+        $sql_check = "SELECT id FROM historial WHERE ci_est = '$ci_est' AND cod_asig = '$cod_req' AND TotalAnual >= 61";
+        $res_check = mysqli_query($conexion, $sql_check);
+        if (mysqli_num_rows($res_check) == 0) {
+            return false; // Falta aprobar este prerrequisito
+        }
+    }
+
+    return true;
+}
+// BÚSQUEDA Y LISTADO DE ESTUDIANTES PARA EL DASHBOARD
+if (!function_exists('buscar_estudiantes')) {
+    function buscar_estudiantes($conn, $busqueda) {
+        $busqueda = mysqli_real_escape_string($conn, trim($busqueda));
+        
+        $sql = "SELECT e.*, c.nombre AS carrera_nombre 
+                FROM estudiante e 
+                LEFT JOIN carrera c ON e.id_carrera = c.id 
+                WHERE e.ci LIKE '%$busqueda%' 
+                   OR e.nombre LIKE '%$busqueda%' 
+                   OR e.ap_pat LIKE '%$busqueda%' 
+                   OR e.ap_mat LIKE '%$busqueda%'
+                ORDER BY e.ap_pat ASC, e.ap_mat ASC, e.nombre ASC";
+                
+        return mysqli_query($conn, $sql);
+    }
+}
+
+if (!function_exists('listar_estudiantes')) {
+    function listar_estudiantes($conn) {
+        $sql = "SELECT e.*, c.nombre AS carrera_nombre 
+                FROM estudiante e 
+                LEFT JOIN carrera c ON e.id_carrera = c.id 
+                ORDER BY e.ap_pat ASC, e.ap_mat ASC, e.nombre ASC";
+                
+        return mysqli_query($conn, $sql);
+    }
+}
 
 ?>
