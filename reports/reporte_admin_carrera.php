@@ -2,169 +2,182 @@
 // Capturar salidas accidentales para evitar errores de FPDF
 ob_start();
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol_id'] != 1) die('Acceso denegado.');
-
 date_default_timezone_set('America/La_Paz');
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/funciones.php';
 require_once __DIR__ . '/../lib/fpdf/fpdf.php';
 
-//  Paleta de colores azul
-$AZUL_PRINCIPAL = [41, 128, 185];
-$AZUL_OSCURO    = [31, 97, 141];
-$VERDE_ACTIVO   = [39, 174, 96];
-$ROJO_INACTIVO  = [192, 57, 43];
-$AZUL_FILA_ALT  = [235, 245, 251];
+// 1. Obtener asignaturas ordenadas por nivel y código desde la BD
+$stmt = $pdo->query("SELECT codigo, nombre, horas, nivel FROM asignatura ORDER BY nivel, codigo");
+$asignaturas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-class PDF extends FPDF {
-    function Header() {
-        $this->SetFont('Arial', 'B', 16);
-        $this->SetFillColor(41, 128, 185);
-        $this->SetTextColor(255);
-        $this->Cell(0, 12, utf8_decode('REPORTE DE ESTUDIANTES POR CARRERA'), 1, 1, 'C', true);
-        $this->SetFont('Arial', '', 10);
-        $this->SetTextColor(0);
-        $this->Cell(0, 6, utf8_decode('Fecha de emisión: ' . date('d/m/Y H:i:s')), 0, 1, 'C');
-        $this->Ln(5);
-    }
-    
-    function Footer() {
-        $this->SetY(-15);
-        $this->SetFont('Arial', 'I', 8);
-        $this->SetTextColor(128);
-        $this->Cell(0, 10, utf8_decode('Página ') . $this->PageNo() . '/{nb}', 0, 0, 'C');
-    }
+// 2. Obtener prerrequisitos desde la BD
+$stmt_pre = $pdo->query("SELECT cod_asig, cod_req FROM prerequisito");
+$prerequisitos_raw = $stmt_pre->fetchAll(PDO::FETCH_ASSOC);
+$prerequisitos = [];
+foreach ($prerequisitos_raw as $p) {
+    $prerequisitos[$p['cod_asig']] = $p['cod_req'];
 }
 
-$pdf = new PDF();
-$pdf->AliasNbPages();
-$pdf->AddPage();
+// Clasificar asignaturas por año según su nivel (100 = Primer Año, 200 = Segundo Año, 300 = Tercer Año)
+$primer_anio = [];
+$segundo_anio = [];
+$tercer_anio = [];
 
-//  Contador general de estudiantes en todo el reporte
-$total_general = 0;
-$total_carreras_con_estudiantes = 0;
-$total_carreras = 0;
+foreach ($asignaturas as $asig) {
+    $item = [
+        'codigo' => $asig['codigo'],
+        'nombre' => $asig['nombre'],
+        'horas' => ($asig['horas'] !== null && $asig['horas'] > 0) ? $asig['horas'] : 4,
+        'prereq' => isset($prerequisitos[$asig['codigo']]) ? $prerequisitos[$asig['codigo']] : '-'
+    ];
 
-$carreras = listar_todas_carreras($conn);
-
-while ($c = mysqli_fetch_assoc($carreras)) {
-    $total_carreras++;
-    
-    // === TÍTULO DE LA CARRERA ===
-    $pdf->SetFont('Arial', 'B', 11);
-    $pdf->SetFillColor($AZUL_PRINCIPAL[0], $AZUL_PRINCIPAL[1], $AZUL_PRINCIPAL[2]);
-    $pdf->SetTextColor(255);
-    $pdf->Cell(0, 9, utf8_decode($c['nombre'] . '  (Código: ' . $c['id'] . ')'), 1, 1, 'L', true);
-    
-    // === ENCABEZADO DE COLUMNAS (con fondo azul) ===
-    $pdf->SetFont('Arial', 'B', 9);
-    $pdf->SetFillColor($AZUL_OSCURO[0], $AZUL_OSCURO[1], $AZUL_OSCURO[2]);
-    $pdf->SetTextColor(255);
-    
-    // Columnas igualadas con ancho total: 28 + 85 + 30 + 27 = 170
-    $pdf->Cell(28, 7, 'CI', 1, 0, 'C', true);
-    $pdf->Cell(85, 7, 'Nombre Completo', 1, 0, 'C', true);
-    $pdf->Cell(50, 7, 'Celular', 1, 0, 'C', true);
-    $pdf->Cell(27, 7, 'Estado', 1, 1, 'C', true);
-    
-    // === LISTADO DE ESTUDIANTES ===
-    $pdf->SetFont('Arial', '', 9);
-    $pdf->SetTextColor(0);
-    
-    $ci_carrera = mysqli_real_escape_string($conn, $c['id']);
-    $query = "SELECT * FROM estudiante WHERE id_carrera = '$ci_carrera' ORDER BY ap_pat, nombre";
-    $result = mysqli_query($conn, $query);
-    
-    $total_estudiantes_carrera = 0;
-    $fill = false; // Para filas alternadas
-    
-    if (mysqli_num_rows($result) > 0) {
-        while ($e = mysqli_fetch_assoc($result)) {
-            // Color de fondo alternado
-            if ($fill) {
-                $pdf->SetFillColor($AZUL_FILA_ALT[0], $AZUL_FILA_ALT[1], $AZUL_FILA_ALT[2]);
-            } else {
-                $pdf->SetFillColor(255, 255, 255);
-            }
-            
-            $pdf->Cell(28, 6, $e['ci'] ?? '', 1, 0, 'C', true);
-            $pdf->Cell(85, 6, utf8_decode(($e['nombre'] ?? '') . ' ' . ($e['ap_pat'] ?? '') . ' ' . ($e['ap_mat'] ?? '')), 1, 0, 'L', true);
-            $pdf->Cell(50, 6, $e['cel'] ?? '-', 1, 0, 'C', true);
-            
-            // Estado con color
-            $estado = $e['activo'] == 1 ? 'ACTIVO' : 'INACTIVO';
-            if ($e['activo'] == 1) {
-                $pdf->SetFillColor($VERDE_ACTIVO[0], $VERDE_ACTIVO[1], $VERDE_ACTIVO[2]);
-            } else {
-                $pdf->SetFillColor($ROJO_INACTIVO[0], $ROJO_INACTIVO[1], $ROJO_INACTIVO[2]);
-            }
-            $pdf->SetTextColor(255);
-            $pdf->Cell(27, 6, $estado, 1, 1, 'C', true);
-            $pdf->SetTextColor(0);
-            
-            $total_estudiantes_carrera++;
-            $fill = !$fill;
-        }
-        
-        // === SUBTOTAL DE LA CARRERA ===
-        $pdf->SetFont('Arial', 'B', 9);
-        $pdf->SetFillColor(220, 235, 245);
-        $pdf->Cell(163, 7, utf8_decode('Total de estudiantes en esta carrera:'), 1, 0, 'R', true);
-        $pdf->Cell(27, 7, $total_estudiantes_carrera, 1, 1, 'C', true);
-        
-        $total_general += $total_estudiantes_carrera;
-        $total_carreras_con_estudiantes++;
-        
+    if ($asig['nivel'] == 100 || substr($asig['codigo'], -3, 1) == '1') {
+        $primer_anio[] = $item;
+    } elseif ($asig['nivel'] == 200 || substr($asig['codigo'], -3, 1) == '2') {
+        $segundo_anio[] = $item;
     } else {
-        // Mensaje cuando no hay estudiantes
-        $pdf->SetFillColor(255, 245, 238);
-        $pdf->SetTextColor(180, 60, 60);
-        $pdf->SetFont('Arial', 'I', 9);
-        $pdf->Cell(170, 7, utf8_decode('No hay estudiantes registrados en esta carrera.'), 1, 1, 'C', true);
-        $pdf->SetTextColor(0);
-    }
-    
-    $pdf->Ln(6);
-    
-    // === CONTROL DE SALTO DE PÁGINA ===
-    // Si quedan menos de 60mm en la página, forzar salto
-    if ($pdf->GetY() > 230) {
-        $pdf->AddPage();
+        $tercer_anio[] = $item;
     }
 }
 
-// === TOTAL GENERAL AL FINAL DEL REPORTE ===
-$pdf->Ln(3);
-$pdf->SetFont('Arial', 'B', 12);
-$pdf->SetFillColor($AZUL_PRINCIPAL[0], $AZUL_PRINCIPAL[1], $AZUL_PRINCIPAL[2]);
-$pdf->SetTextColor(255);
-$pdf->Cell(0, 10, utf8_decode('RESUMEN GENERAL'), 1, 1, 'C', true);
+class PDF extends FPDF
+{
+    function Header()
+    {
+        // Encabezado superior institucional (gris oscuro)
+        $this->SetFillColor(90, 90, 90);
+        $this->Rect(10, 10, 277, 28, 'F');
 
-$pdf->SetFont('Arial', '', 11);
-$pdf->SetTextColor(0);
-$pdf->SetFillColor(240, 240, 240);
+        $this->SetFont('Arial', 'B', 11);
+        $this->SetTextColor(255, 255, 255);
+        $this->SetXY(12, 12);
+        $this->Cell(95, 6, utf8_decode('PLAN DE ESTUDIOS'), 0, 1, 'C');
 
-$pdf->Cell(150, 8, utf8_decode('Total de carreras registradas:'), 1, 0, 'L', true);
-$pdf->Cell(40, 8, $total_carreras, 1, 1, 'C', true);
+        $this->SetFont('Arial', 'B', 9);
+        $this->SetXY(12, 18);
+        $this->MultiCell(95, 4, utf8_decode('ÁREA DE FORMACIÓN: COMERCIAL Y SERVICIOS'), 0, 'C');
 
-$pdf->Cell(150, 8, utf8_decode('Carreras con estudiantes activos:'), 1, 0, 'L', true);
-$pdf->Cell(40, 8, $total_carreras_con_estudiantes, 1, 1, 'C', true);
+        $this->SetFont('Arial', '', 8);
+        $this->SetXY(12, 28);
+        $this->Cell(95, 4, utf8_decode('CARGA HORARIA: 3600 Hrs.'), 0, 1, 'C');
 
-$pdf->SetFont('Arial', 'B', 11);
-$pdf->SetFillColor(39, 174, 96);
-$pdf->SetTextColor(255);
-$pdf->Cell(150, 10, utf8_decode('TOTAL GENERAL DE ESTUDIANTES:'), 1, 0, 'L', true);
-$pdf->Cell(40, 10, $total_general, 1, 1, 'C', true);
+        $this->SetFont('Arial', 'B', 12);
+        $this->SetXY(110, 12);
+        $this->Cell(175, 7, utf8_decode('CARRERA: SISTEMAS INFORMÁTICOS'), 0, 1, 'C');
 
-$pdf->Ln(8);
-$pdf->SetFont('Arial', 'I', 8);
-$pdf->SetTextColor(128);
-$pdf->Cell(0, 6, utf8_decode('Documento generado automáticamente por el Sistema Académico.'), 0, 1, 'C');
+        $this->SetFont('Arial', 'B', 9);
+        $this->SetXY(110, 20);
+        $this->MultiCell(175, 4, utf8_decode('DENOMINACIÓN DEL TÍTULO PROFESIONAL:\nTÉCNICO SUPERIOR EN SISTEMAS INFORMÁTICOS'), 0, 'C');
 
-// Limpiar buffer antes de enviar el PDF
-if (ob_get_length()) ob_end_clean();
+        // Franja de horas
+        $this->SetFillColor(210, 210, 210);
+        $this->SetTextColor(0, 0, 0);
+        $this->SetFont('Arial', 'B', 8);
+        $this->SetXY(10, 39);
+        $this->Cell(277, 5, utf8_decode('HORAS SEMANA: 30  -  HORAS MES: 120  -  HORAS AÑO: 1200'), 1, 1, 'C', true);
+        $this->Ln(2);
+    }
 
-$pdf->Output('I', 'Reporte_Estudiantes_por_Carrera_' . date('Y-m-d') . '.pdf');
-exit;
-?>
+    function Footer()
+    {
+        $this->SetY(-18);
+        $this->SetFont('Arial', '', 6.5);
+        $this->SetTextColor(70, 70, 70);
+        $nota = utf8_decode('Nota: Los Valores Sociocomunitarios, descolonización y despatriarcalización, cuidado del medio ambiente, prevención de la violencia de género, ética profesional, y la articulación con los sectores sociales y productivo bajo un enfoque de emprendimiento, deben ser desarrolladas en todas las asignaturas por las y los docentes para la formación integral de las y los estudiantes.');
+        $this->MultiCell(277, 3.5, $nota, 0, 'L');
+    }
+}
+
+// Crear instancia en orientación Horizontal (Landscape - L), tamaño A4
+$pdf = new PDF('L', 'mm', 'A4');
+$pdf->AddPage();
+$pdf->SetAutoPageBreak(false);
+
+// Cabeceras de Años
+$pdf->SetY(46);
+$pdf->SetFont('Arial', 'B', 9);
+$pdf->SetFillColor(100, 100, 100);
+$pdf->SetTextColor(255, 255, 255);
+
+$pdf->Cell(62, 6, utf8_decode('PRIMER AÑO'), 1, 0, 'C', true);
+$pdf->Cell(105, 6, utf8_decode('SEGUNDO AÑO'), 1, 0, 'C', true);
+$pdf->Cell(110, 6, utf8_decode('TERCER AÑO'), 1, 1, 'C', true);
+
+// Sub-cabeceras de columnas
+$pdf->SetFillColor(235, 235, 235);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->SetFont('Arial', 'B', 7.5);
+
+// Primer Año
+$pdf->Cell(16, 5, utf8_decode('CÓDIGO'), 1, 0, 'C', true);
+$pdf->Cell(40, 5, utf8_decode('ASIGNATURAS'), 1, 0, 'C', true);
+$pdf->Cell(6,  5, utf8_decode('HR'), 1, 0, 'C', true);
+
+// Segundo Año
+$pdf->Cell(16, 5, utf8_decode('CÓDIGO'), 1, 0, 'C', true);
+$pdf->Cell(71, 5, utf8_decode('ASIGNATURAS'), 1, 0, 'C', true);
+$pdf->Cell(6,  5, utf8_decode('HR'), 1, 0, 'C', true);
+$pdf->Cell(12, 5, utf8_decode('P.REQ'), 1, 0, 'C', true);
+
+// Tercer Año
+$pdf->Cell(16, 5, utf8_decode('CÓDIGO'), 1, 0, 'C', true);
+$pdf->Cell(74, 5, utf8_decode('ASIGNATURAS'), 1, 0, 'C', true);
+$pdf->Cell(6,  5, utf8_decode('HR'), 1, 0, 'C', true);
+$pdf->Cell(14, 5, utf8_decode('P.REQ'), 1, 1, 'C', true);
+
+// Iterar filas dinámicamente según la cantidad máxima de materias entre los años
+$max_rows = max(count($primer_anio), count($segundo_anio), count($tercer_anio));
+
+$pdf->SetFont('Arial', '', 7.5);
+for ($i = 0; $i < $max_rows; $i++) {
+    // Primer Año
+    if (isset($primer_anio[$i])) {
+        $pdf->Cell(16, 5.5, utf8_decode($primer_anio[$i]['codigo']), 1, 0, 'C');
+        $pdf->Cell(40, 5.5, utf8_decode($primer_anio[$i]['nombre']), 1, 0, 'L');
+        $pdf->Cell(6,  5.5, utf8_decode($primer_anio[$i]['horas']), 1, 0, 'C');
+    } else {
+        $pdf->Cell(16, 5.5, '', 1, 0, 'C');
+        $pdf->Cell(40, 5.5, '', 1, 0, 'L');
+        $pdf->Cell(6,  5.5, '', 1, 0, 'C');
+    }
+
+    // Segundo Año
+    if (isset($segundo_anio[$i])) {
+        $pdf->Cell(16, 5.5, utf8_decode($segundo_anio[$i]['codigo']), 1, 0, 'C');
+        $pdf->Cell(71, 5.5, utf8_decode($segundo_anio[$i]['nombre']), 1, 0, 'L');
+        $pdf->Cell(6,  5.5, utf8_decode($segundo_anio[$i]['horas']), 1, 0, 'C');
+        $pdf->Cell(12, 5.5, utf8_decode($segundo_anio[$i]['prereq']), 1, 0, 'C');
+    } else {
+        $pdf->Cell(16, 5.5, '', 1, 0, 'C');
+        $pdf->Cell(71, 5.5, '', 1, 0, 'L');
+        $pdf->Cell(6,  5.5, '', 1, 0, 'C');
+        $pdf->Cell(12, 5.5, '', 1, 0, 'C');
+    }
+
+    // Tercer Año
+    if (isset($tercer_anio[$i])) {
+        $pdf->Cell(16, 5.5, utf8_decode($tercer_anio[$i]['codigo']), 1, 0, 'C');
+        $pdf->Cell(74, 5.5, utf8_decode($tercer_anio[$i]['nombre']), 1, 0, 'L');
+        $pdf->Cell(6,  5.5, utf8_decode($tercer_anio[$i]['horas']), 1, 0, 'C');
+        $pdf->Cell(14, 5.5, utf8_decode($tercer_anio[$i]['prereq']), 1, 1, 'C');
+    } else {
+        $pdf->Cell(16, 5.5, '', 1, 0, 'C');
+        $pdf->Cell(74, 5.5, '', 1, 0, 'L');
+        $pdf->Cell(6,  5.5, '', 1, 0, 'C');
+        $pdf->Cell(14, 5.5, '', 1, 1, 'C');
+    }
+}
+
+// Asegurar que la carpeta reports exista
+$output_dir = __DIR__ . '/../reports';
+if (!file_exists($output_dir)) {
+    mkdir($output_dir, 0777, true);
+}
+
+// Limpiar buffer de salida antes de generar el archivo PDF
+ob_end_clean();
+
+// Guardar archivo en la carpeta reports
+$pdf->Output('F', $output_dir . '/plan_estudios.pdf');
+echo "PDF generado exitosamente en reports/plan_estudios.pdf";

@@ -1,5 +1,6 @@
 <?php include 'views/header.php'; ?>
 
+<link rel="stylesheet" href="/sig/public/css/registro.css">
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -15,7 +16,7 @@
 
             <!-- Card registro -->
             <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
+                <div class="card-header bg-danger text-white">
                     <h5 class="mb-0"><i class="bi bi-person-plus-fill"></i> Registro de Estudiante</h5>
                 </div>
                 <div class="card-body">
@@ -114,7 +115,7 @@
                             </div>
                         </div>
 
-                        
+
 
                         <div class="row g-3 mt-2 fw-bold">
                             <!-- Doc CI -->
@@ -139,10 +140,10 @@
 
                         <!-- Botones -->
                         <div class="mt-4">
-                            <button type="submit" class="btn btn-success" id="btnRegistrar">
+                            <button type="submit" class="btn btn-danger" id="btnRegistrar">
                                 <i class="bi bi-check-circle-fill"></i> Registrarse
                             </button>
-                            <a href="index.php?action=login" class="btn btn-outline-success ms-2">
+                            <a href="index.php?action=login" class="btn btn-outline-danger ms-2">
                                 <i class="bi bi-arrow-left"></i> Cancelar
                             </a>
                         </div>
@@ -175,107 +176,109 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ciInput = document.getElementById('ci_input');
-    const ciMensaje = document.getElementById('ci_mensaje');
-    const usuarioDisplay = document.getElementById('usuario_display');
-    const claveDisplay = document.getElementById('clave_display');
-    const usuarioHidden = document.getElementById('usuario_hidden');
-    const claveHidden = document.getElementById('clave_hidden');
-    const turnoSelect = document.getElementById('turno_select');
-    const grupoSelect = document.getElementById('grupo_select');
-    
-    // --- CAPTURAR CI DE LA URL SI VIENE DEL LOGIN ---
-    const urlParams = new URLSearchParams(window.location.search);
-    const ciUrl = urlParams.get('ci');
-    if (ciUrl) {
-        ciInput.value = ciUrl;
-        ciInput.dispatchEvent(new Event('input'));
-    }
-    
-    ciInput.addEventListener('input', function() {
-        const ci = this.value.trim();
-        
-        // Copiar automáticamente el CI al usuario y contraseña (visual y oculto)
-        if (ci) {
-            if (usuarioDisplay) usuarioDisplay.value = ci;
-            if (claveDisplay) claveDisplay.value = ci;
-            if (usuarioHidden) usuarioHidden.value = ci;
-            if (claveHidden) claveHidden.value = ci;
-        } else {
-            if (usuarioDisplay) usuarioDisplay.value = 'Se genera con su CI';
-            if (claveDisplay) claveDisplay.value = 'Se genera con su CI';
-            if (usuarioHidden) usuarioHidden.value = '';
-            if (claveHidden) claveHidden.value = '';
+    document.addEventListener('DOMContentLoaded', function() {
+        const ciInput = document.getElementById('ci_input');
+        const ciMensaje = document.getElementById('ci_mensaje');
+        const usuarioDisplay = document.getElementById('usuario_display');
+        const claveDisplay = document.getElementById('clave_display');
+        const usuarioHidden = document.getElementById('usuario_hidden');
+        const claveHidden = document.getElementById('clave_hidden');
+        const turnoSelect = document.getElementById('turno_select');
+        const grupoSelect = document.getElementById('grupo_select');
+
+        // --- CAPTURAR CI DE LA URL SI VIENE DEL LOGIN ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const ciUrl = urlParams.get('ci');
+        if (ciUrl) {
+            ciInput.value = ciUrl;
+            ciInput.dispatchEvent(new Event('input'));
         }
-        
-        if (ci.length < 5) {
-            ciMensaje.textContent = '';
-            ciInput.classList.remove('is-invalid', 'is-valid');
-            document.getElementById('btnRegistrar').disabled = false;
-            return;
+
+        ciInput.addEventListener('input', function() {
+            const ci = this.value.trim();
+
+            // Copiar automáticamente el CI al usuario y contraseña (visual y oculto)
+            if (ci) {
+                if (usuarioDisplay) usuarioDisplay.value = ci;
+                if (claveDisplay) claveDisplay.value = ci;
+                if (usuarioHidden) usuarioHidden.value = ci;
+                if (claveHidden) claveHidden.value = ci;
+            } else {
+                if (usuarioDisplay) usuarioDisplay.value = 'Se genera con su CI';
+                if (claveDisplay) claveDisplay.value = 'Se genera con su CI';
+                if (usuarioHidden) usuarioHidden.value = '';
+                if (claveHidden) claveHidden.value = '';
+            }
+
+            if (ci.length < 5) {
+                ciMensaje.textContent = '';
+                ciInput.classList.remove('is-invalid', 'is-valid');
+                document.getElementById('btnRegistrar').disabled = false;
+                return;
+            }
+
+            // ciMensaje.textContent = 'Verificando...';
+            ciMensaje.className = 'form-text text-muted';
+
+            fetch('index.php?action=verificar_ci&ci=' + encodeURIComponent(ci))
+                .then(function(r) {
+                    return r.json();
+                })
+                .then(function(data) {
+                    if (data.existe) {
+                        ciMensaje.textContent = data.mensaje;
+                        ciMensaje.className = 'form-text text-danger fw-bold';
+                        ciInput.classList.add('is-invalid');
+                        ciInput.classList.remove('is-valid');
+                        document.getElementById('btnRegistrar').disabled = true;
+                    } else {
+                        ciMensaje.textContent = data.mensaje;
+                        ciMensaje.className = 'form-text text-danger fw-bold';
+                        ciInput.classList.remove('is-invalid');
+                        ciInput.classList.add('is-valid');
+                        document.getElementById('btnRegistrar').disabled = false;
+                    }
+                })
+            /* .catch(function(err) {
+                 ciMensaje.textContent = 'Error de conexión al verificar CI.';
+                 ciMensaje.className = 'form-text text-danger';
+             });*/
+        });
+
+        if (turnoSelect && grupoSelect) {
+            turnoSelect.addEventListener('change', function() {
+                if (this.value === 'MAÑANA') grupoSelect.value = 'A';
+                else if (this.value === 'TARDE') grupoSelect.value = 'B';
+                else grupoSelect.value = '';
+            });
         }
-        
-       // ciMensaje.textContent = 'Verificando...';
-        ciMensaje.className = 'form-text text-muted';
-        
-        fetch('index.php?action=verificar_ci&ci=' + encodeURIComponent(ci))
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.existe) {
-                    ciMensaje.textContent = data.mensaje;
-                    ciMensaje.className = 'form-text text-danger fw-bold';
-                    ciInput.classList.add('is-invalid');
-                    ciInput.classList.remove('is-valid');
-                    document.getElementById('btnRegistrar').disabled = true;
-                } else {
-                    ciMensaje.textContent = data.mensaje;
-                    ciMensaje.className = 'form-text text-success fw-bold';
-                    ciInput.classList.remove('is-invalid');
-                    ciInput.classList.add('is-valid');
-                    document.getElementById('btnRegistrar').disabled = false;
-                }
-            })
-           /* .catch(function(err) {
-                ciMensaje.textContent = 'Error de conexión al verificar CI.';
-                ciMensaje.className = 'form-text text-danger';
-            });*/
     });
 
-    if (turnoSelect && grupoSelect) {
-        turnoSelect.addEventListener('change', function() {
-            if (this.value === 'MAÑANA') grupoSelect.value = 'A';
-            else if (this.value === 'TARDE') grupoSelect.value = 'B';
-            else grupoSelect.value = '';
-        });
+    function validarApellidos() {
+        const ap_pat = document.getElementById('ap_pat').value.trim();
+        const ap_mat = document.getElementById('ap_mat').value.trim();
+        if (ap_pat === '' && ap_mat === '') {
+            document.getElementById('ap_pat').classList.add('is-invalid');
+            document.getElementById('ap_mat').classList.add('is-invalid');
+            return false;
+        } else {
+            document.getElementById('ap_pat').classList.remove('is-invalid');
+            document.getElementById('ap_mat').classList.remove('is-invalid');
+            return true;
+        }
     }
-});
 
-function validarApellidos() {
-    const ap_pat = document.getElementById('ap_pat').value.trim();
-    const ap_mat = document.getElementById('ap_mat').value.trim();
-    if (ap_pat === '' && ap_mat === '') {
-        document.getElementById('ap_pat').classList.add('is-invalid');
-        document.getElementById('ap_mat').classList.add('is-invalid');
-        return false;
-    } else {
-        document.getElementById('ap_pat').classList.remove('is-invalid');
-        document.getElementById('ap_mat').classList.remove('is-invalid');
-        return true;
-    }
-}
-
-document.getElementById('formRegistro').addEventListener('submit', function(e) {
-    if (!validarApellidos()) {
-        e.preventDefault();
-        alert('Debe ingresar al menos un apellido');
-        return;
-    }
-    // Asegurar envío de credenciales basadas en CI
-    const ciVal = document.getElementById('ci_input').value.trim();
-    document.getElementById('usuario_hidden').value = ciVal;
-    document.getElementById('clave_hidden').value = ciVal;
-});
+    document.getElementById('formRegistro').addEventListener('submit', function(e) {
+        if (!validarApellidos()) {
+            e.preventDefault();
+            alert('Debe ingresar al menos un apellido');
+            return;
+        }
+        // Asegurar envío de credenciales basadas en CI
+        const ciVal = document.getElementById('ci_input').value.trim();
+        document.getElementById('usuario_hidden').value = ciVal;
+        document.getElementById('clave_hidden').value = ciVal;
+    });
 </script>
 
 <?php include 'views/footer.php'; ?>

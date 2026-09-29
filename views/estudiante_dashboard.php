@@ -1,39 +1,5 @@
-<style> 
-.btn-success-custom {
-    background: linear-gradient(135deg, #059d3b, #022818);
-    border: none;
-    color: #fff;
-    font-weight: 600;
-}
-.btn-success-custom:hover {
-    background: rgba(8, 173, 66, 0.15);
-    border: 1px solid #059d3b;
-    color: #ffffff;
-    box-shadow: 0 8px 20px rgba(5, 157, 59, 0.25);
-}
-.badge-aprobado { background-color: #198754; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
-.badge-reprobado { background-color: #dc3545; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
-.badge-2doturno { background-color: #fd7e14; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
-.badge-proceso { background-color: #0dcaf0; color: #000; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
-.th-bim { background-color: #198754 !important; color: white !important; font-size: 12px; }
-.th-sub { font-size: 11px; background-color: #212529 !important; color: white !important; }
-
-.estado-final-box {
-    border-left: 5px solid;
-    padding: 15px 20px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    margin-top: 20px;
-}
-.estado-aprobado { background-color: #d1e7dd; border-color: #198754; color: #0f5132; }
-.estado-segundo { background-color: #fff3cd; border-color: #fd7e14; color: #664d03; }
-.estado-reprobado { background-color: #f8d7da; border-color: #dc3545; color: #842029; }
-.estado-proceso { background-color: #cff4fc; border-color: #0dcaf0; color: #055160; }
-</style>
-
-<?php 
-include 'views/header.php'; 
+<?php
+include 'views/header.php';
 
 $datos_est = obtener_datos_estudiante($conn, $_SESSION['estudiante_ci']);
 
@@ -63,7 +29,8 @@ while ($g = mysqli_fetch_assoc($gestiones_query)) {
     if ($g['gestion']) $gestiones[] = $g['gestion'];
 }
 
-function verNota($val) {
+function verNota($val)
+{
     return (isset($val) && $val !== '' && $val !== null) ? htmlspecialchars($val) : '-';
 }
 
@@ -120,10 +87,10 @@ if ($total_materias > 0) {
     $estado_final_badge = "badge-proceso";
 }
 ?>
-
+<link rel="stylesheet" href="/sig/public/css/estudiante_dashboard.css">
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card bg-success text-white shadow">
+        <div class="card bg-danger text-white shadow">
             <div class="card-body">
                 <h3><i class="bi bi-person-badge"></i> Bienvenido(a), <?= htmlspecialchars(($datos_est['nombre'] ?? '') . ' ' . ($datos_est['ap_pat'] ?? '')) ?></h3>
                 <p class="mb-0">CI: <?= htmlspecialchars($datos_est['ci'] ?? '') ?> | Carrera: <?= htmlspecialchars($datos_est['carrera_nombre'] ?? '') ?></p>
@@ -145,15 +112,15 @@ if ($total_materias > 0) {
             <?php endforeach; ?>
         </select>
     </div>
-<div class="col-md-8 d-flex align-items-end justify-content-end">
-    <a href="index.php?action=generar_reporte<?= $gestion_seleccionada ? '&gestion=' . urlencode($gestion_seleccionada) : '' ?>" class="btn btn-success" target="_blank">
-        <i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF
-    </a>
-</div>
+    <div class="col-md-8 d-flex align-items-end justify-content-end">
+        <a href="index.php?action=generar_reporte<?= $gestion_seleccionada ? '&gestion=' . urlencode($gestion_seleccionada) : '' ?>" class="btn btn-danger" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Generar Reporte PDF
+        </a>
+    </div>
 </div>
 
 <div class="card shadow-sm">
-    <div class="card-header bg-success text-white">
+    <div class="card-header bg-danger text-white">
         <h5 class="mb-0"><i class="bi bi-journal-check"></i> Mis Materias y Calificaciones Bimestrales</h5>
     </div>
     <div class="card-body">
@@ -173,15 +140,23 @@ if ($total_materias > 0) {
                         <th rowspan="2" class="align-middle bg-dark text-white">Estado</th>
                     </tr>
                     <tr class="th-sub">
-                        <th>Teórico</th><th>Práctica</th><th>Nota</th>
-                        <th>Teórico</th><th>Práctica</th><th>Nota</th>
-                        <th>Teórico</th><th>Práctica</th><th>Nota</th>
-                        <th>Teórico</th><th>Práctica</th><th>Nota</th>
+                        <th>Teórico</th>
+                        <th>Práctica</th>
+                        <th>Nota</th>
+                        <th>Teórico</th>
+                        <th>Práctica</th>
+                        <th>Nota</th>
+                        <th>Teórico</th>
+                        <th>Práctica</th>
+                        <th>Nota</th>
+                        <th>Teórico</th>
+                        <th>Práctica</th>
+                        <th>Nota</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!empty($temp_inscripciones)): ?>
-                        <?php foreach ($temp_inscripciones as $i): 
+                        <?php foreach ($temp_inscripciones as $i):
                             $estado_materia = strtoupper(trim($i['estado'] ?? 'EN PROCESO'));
                             $nota_parcial = $i['nota_parcial'] ?? null;
                             $total_anual = $i['nota_final'] ?? null;
@@ -191,31 +166,31 @@ if ($total_materias > 0) {
                             <tr>
                                 <td><strong><?= htmlspecialchars($i['asig_codigo'] ?? '-') ?></strong></td>
                                 <td style="text-align: left;"><?= htmlspecialchars($i['asig_nombre'] ?? '-') ?></td>
-                                
+
                                 <td><?= verNota($i['nota_teorico1']) ?></td>
                                 <td><?= verNota($i['nota_pract1']) ?></td>
-                                <td class="table-success"><strong><?= verNota($i['nota_primerbim']) ?></strong></td>
-                                
+                                <td class="table-danger"><strong><?= verNota($i['nota_primerbim']) ?></strong></td>
+
                                 <td><?= verNota($i['nota_teorico2']) ?></td>
                                 <td><?= verNota($i['nota_pract2']) ?></td>
-                                <td class="table-success"><strong><?= verNota($i['nota_segundobim']) ?></strong></td>
-                                
+                                <td class="table-danger"><strong><?= verNota($i['nota_segundobim']) ?></strong></td>
+
                                 <td><?= verNota($i['nota_teorico3']) ?></td>
                                 <td><?= verNota($i['nota_pract3']) ?></td>
-                                <td class="table-success"><strong><?= verNota($i['nota_tercerbim']) ?></strong></td>
-                                
+                                <td class="table-danger"><strong><?= verNota($i['nota_tercerbim']) ?></strong></td>
+
                                 <td><?= verNota($i['nota_teorico4']) ?></td>
                                 <td><?= verNota($i['nota_pract4']) ?></td>
-                                <td class="table-success"><strong><?= verNota($i['nota_cuartobim']) ?></strong></td>
-                                
+                                <td class="table-danger"><strong><?= verNota($i['nota_cuartobim']) ?></strong></td>
+
                                 <td class="fw-bold text-primary"><?= verNota($nota_parcial) ?></td>
-                                
-                                <td class="fs-6 fw-bold <?= ($total_anual !== null && (float)$total_anual < 51 && !$es_segundo_turno) ? 'text-danger' : 'text-success' ?>">
+
+                                <td class="fs-6 fw-bold <?= ($total_anual !== null && (float)$total_anual < 51 && !$es_segundo_turno) ? 'text-danger' : 'text-danger' ?>">
                                     <?= verNota($total_anual) ?>
                                 </td>
 
                                 <td class="fw-bold text-dark"><?= verNota($literal) ?></td>
-                                
+
                                 <td>
                                     <?php if ($estado_materia === 'APROBADO'): ?>
                                         <span class="badge-aprobado">Aprobado</span>
@@ -230,10 +205,12 @@ if ($total_materias > 0) {
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="18" class="text-center p-4">
-                            <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
-                            No se encontraron inscripciones o notas registradas<?= $gestion_seleccionada ? ' para la gestión ' . htmlspecialchars($gestion_seleccionada) : '' ?>.
-                        </td></tr>
+                        <tr>
+                            <td colspan="18" class="text-center p-4">
+                                <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                                No se encontraron inscripciones o notas registradas<?= $gestion_seleccionada ? ' para la gestión ' . htmlspecialchars($gestion_seleccionada) : '' ?>.
+                            </td>
+                        </tr>
                     <?php endif; ?>
                 </tbody>
             </table>

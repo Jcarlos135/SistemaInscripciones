@@ -13,7 +13,7 @@
             --surface3: #2c3150;
             --accent: #6c63ff;
             --accent2: #a78bfa;
-            --success: #10b981;
+            --danger: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
             --info: #3b82f6;
@@ -119,8 +119,8 @@
         }
         .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,.4); }
-        .btn-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
-        .btn-success:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,.35); }
+        .btn-danger { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+        .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,.35); }
         .btn-danger  { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; }
         .btn-danger:hover  { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(239,68,68,.35); }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
@@ -171,7 +171,7 @@
 
         /* PROMEDIO */
         .promedio-value { font-weight: 800; font-size: 1.05rem; }
-        .promedio-aprobado  { color: var(--success); }
+        .promedio-aprobado  { color: var(--danger); }
         .promedio-reprobado { color: var(--danger); }
 
         /* MODAL */
@@ -232,7 +232,7 @@
         .resumen-segundo   { background: rgba(245,158,11,.08);  border-color: rgba(245,158,11,.3); }
         .resumen-reprobado { background: rgba(239,68,68,.08);   border-color: rgba(239,68,68,.3); }
         .resumen-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
-        .resumen-aprobado  .resumen-title { color: var(--success); }
+        .resumen-aprobado  .resumen-title { color: var(--danger); }
         .resumen-segundo   .resumen-title { color: var(--warning); }
         .resumen-reprobado .resumen-title { color: var(--danger); }
 
@@ -301,7 +301,7 @@
                 <div class="stat-label">📋 Total Estudiantes</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color:var(--success)" id="stat-aprobados">0</div>
+                <div class="stat-number" style="color:var(--danger)" id="stat-aprobados">0</div>
                 <div class="stat-label">✅ Aprobados</div>
             </div>
             <div class="stat-card">
@@ -439,7 +439,7 @@
         <div class="sep"></div>
         <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
             <button class="btn btn-outline" onclick="closeModal('modal-notas')">Cancelar</button>
-            <button class="btn btn-success" onclick="guardarNotas()">💾 Guardar Calificaciones</button>
+            <button class="btn btn-danger" onclick="guardarNotas()">💾 Guardar Calificaciones</button>
         </div>
     </div>
 </div>
@@ -688,7 +688,7 @@ function renderEstudiantes(filtroTxt = '', filtroCar = '') {
             </td>
             <td><span class="badge badge-purple">${CARRERA_NOMBRE[est.carrera] || est.carrera}</span></td>
             <td>${est.turno}</td>
-            <td><span style="color:var(--success);font-weight:700">${aprob}</span>/${mats.length}</td>
+            <td><span style="color:var(--danger);font-weight:700">${aprob}</span>/${mats.length}</td>
             <td><span style="color:${reprob>0?'var(--danger)':'var(--text2)'};font-weight:700">${reprob}</span></td>
             <td><span class="promedio-value ${promCls}">${promTxt}</span></td>
             <td><span class="badge ${bc}">${literal}</span></td>
@@ -774,7 +774,7 @@ function recFila(key, mat) {
     if (prom !== null) {
         const ok = prom >= NOTA_MINIMA;
         pEl.textContent = prom.toFixed(1);
-        pEl.style.color = ok ? 'var(--success)' : 'var(--danger)';
+        pEl.style.color = ok ? 'var(--danger)' : 'var(--danger)';
         eEl.innerHTML   = ok
             ? '<span class="badge badge-green">✅ APROBADO</span>'
             : '<span class="badge badge-red">❌ REPROBADO</span>';
@@ -806,7 +806,7 @@ function recResumen() {
             <div><span style="color:var(--text2);font-size:.78rem;display:block">PROMEDIO GENERAL</span>
                  <strong style="font-size:1.5rem">${pt}</strong></div>
             <div><span style="color:var(--text2);font-size:.78rem;display:block">APROBADAS</span>
-                 <strong style="font-size:1.5rem;color:var(--success)">${aprob}</strong></div>
+                 <strong style="font-size:1.5rem;color:var(--danger)">${aprob}</strong></div>
             <div><span style="color:var(--text2);font-size:.78rem;display:block">REPROBADAS</span>
                  <strong style="font-size:1.5rem;color:${reprob>0?'var(--danger)':'var(--text2)'}">${reprob}</strong></div>
         </div>
@@ -966,9 +966,9 @@ function renderReporte() {
             <td>${CARRERA_NOMBRE[est.carrera]||est.carrera}</td>
             <td>${est.turno}</td>
             <td>${mats.length}</td>
-            <td style="color:var(--success);font-weight:700">${aprob}</td>
+            <td style="color:var(--danger);font-weight:700">${aprob}</td>
             <td style="color:${reprob>0?'var(--danger)':'var(--text2)'};font-weight:700">${reprob}</td>
-            <td style="font-weight:800;color:${promG!==null&&promG>=NOTA_MINIMA?'var(--success)':'var(--danger)'}">${pt}</td>
+            <td style="font-weight:800;color:${promG!==null&&promG>=NOTA_MINIMA?'var(--danger)':'var(--danger)'}">${pt}</td>
             <td><span class="badge ${bc}">${literal}</span></td>
             <td style="font-size:.79rem;color:var(--text2);max-width:240px">${obs||'—'}</td>
         </tr>`;

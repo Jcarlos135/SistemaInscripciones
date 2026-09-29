@@ -1,5 +1,5 @@
 <?php include 'views/header.php'; ?>
-
+<link rel="stylesheet" href="/sig/public/css/gestion_docentes.css">
 <h2 class="mb-4"><i class="bi bi-person-workspace"></i> Gestión de Plantel Docente</h2>
 
 <?php if (isset($_SESSION['alerta'])): ?>
@@ -63,7 +63,7 @@
             </div>
         </div>
 
-        <!-- Formulario de Asignación -->
+        <!-- Formulario de Asignación 
         <div class="card card-verde">
             <div class="card-header card-header-negro">
                 <h5 class="mb-0"><i class="bi bi-journal-bookmark-fill"></i> Asignar Materia</h5>
@@ -106,7 +106,7 @@
                     <i class="bi bi-info-circle"></i> Asigna al docente a todas las inscripciones de estudiantes en esa materia que estén pendientes.
                 </div>
             </div>
-        </div>
+        </div>  -->
 
     </div>
 
@@ -140,22 +140,22 @@
                                     <td><?= htmlspecialchars($doc['nombre'] . ' ' . $doc['ap_pat'] . ' ' . $doc['ap_mat']) ?></td>
                                     <td><?= htmlspecialchars($doc['cel']) ?></td>
                                     <td><?= htmlspecialchars($doc['email']) ?></td>
-                                    <td class="text-center pe-4">
-                                    <div class="d-flex gap-1 justify-content-center flex-wrap">
-                                        <!-- 🔵 BOTÓN NUEVO: Ver y administrar materias -->
-                                        <a href="index.php?action=ver_materias_docente&id_docente=<?= (int)$doc['id_docente'] ?>" 
-                                        class="btn btn-sm btn-action-ver" 
-                                        title="Ver y administrar materias de este docente">
-                                            <i class="bi bi-journal-bookmark"></i> Materias
-                                        </a>
-                                        <!-- Tu botón original sin cambios -->
-                                        <a href="index.php?action=eliminar_docente&ci=<?= $doc['ci'] ?>" 
-                                        class="btn btn-sm btn-action-eliminar" 
-                                        onclick="return confirm('¿Estás seguro de dar de baja a este docente? Esta acción desactivará también su usuario.')">
-                                            <i class="bi bi-trash"></i> Dar de baja
-                                        </a>
-                                    </div>
-                                </td>
+                                    <td class="text-end">
+    <div class="d-flex gap-1 justify-content-end">
+        <!-- Botón Materias -->
+        <a href="index.php?action=ver_materias_docente&id_docente=<?= $docente['id_docente'] ?>" 
+           class="btn btn-info btn-sm text-white">
+            <i class="bi bi-journal-bookmark-fill"></i> Materias
+        </a>
+        
+        <!-- Botón Dar de baja -->
+        <a href="index.php?action=dar_baja_docente&id_docente=<?= $docente['id_docente'] ?>" 
+           class="btn btn-danger btn-sm"
+           onclick="return confirm('¿Está seguro de realizar esta acción?');">
+            <i class="bi bi-trash-fill"></i> Dar de baja
+        </a>
+    </div>
+</td>
                                 </tr>
                             <?php 
                                 endwhile; 

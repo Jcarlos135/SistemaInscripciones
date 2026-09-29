@@ -14,7 +14,7 @@
 </div>
 
 <?php if (isset($_SESSION['alerta'])): ?>
-    <div class="alert alert-<?php echo $_SESSION['alerta']['tipo'] === 'success' ? 'success' : 'danger'; ?> alert-dismissible fade show">
+    <div class="alert alert-<?php echo $_SESSION['alerta']['tipo'] === 'danger' ? 'danger' : 'danger'; ?> alert-dismissible fade show">
         <?php echo htmlspecialchars($_SESSION['alerta']['msg']); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
@@ -42,9 +42,11 @@
                         </thead>
                         <tbody>
                             <?php if (empty($materias_asignadas)): ?>
-                                <tr><td colspan="5" class="text-center text-muted py-4">
-                                    <i class="bi bi-info-circle"></i> Este docente no tiene materias asignadas.
-                                </td></tr>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-info-circle"></i> Este docente no tiene materias asignadas.
+                                    </td>
+                                </tr>
                             <?php else: ?>
                                 <?php foreach ($materias_asignadas as $mat): ?>
                                     <tr>
@@ -54,7 +56,7 @@
                                         <td><?php echo (int)$mat['estudiantes']; ?></td>
                                         <td>
                                             <form method="POST" action="index.php?action=quitar_materia_docente"
-                                                  onsubmit="return confirmarQuitar('<?php echo htmlspecialchars($mat['nombre'], ENT_QUOTES); ?>');">
+                                                onsubmit="return confirmarQuitar('<?php echo htmlspecialchars($mat['nombre'], ENT_QUOTES); ?>');">
                                                 <input type="hidden" name="id_docente" value="<?php echo (int)$id_docente; ?>">
                                                 <input type="hidden" name="cod_asig" value="<?php echo htmlspecialchars($mat['codigo']); ?>">
                                                 <button type="submit" class="btn btn-action-eliminar btn-sm">
@@ -112,9 +114,9 @@
 </div>
 
 <script>
-function confirmarQuitar(nombreMateria) {
-    return confirm('¿Quitar la materia "' + nombreMateria + '" de este docente?\n\nLas notas ya registradas NO se eliminan, solo quedan sin docente asignado.');
-}
+    function confirmarQuitar(nombreMateria) {
+        return confirm('¿Quitar la materia "' + nombreMateria + '" de este docente?\n\nLas notas ya registradas NO se eliminan, solo quedan sin docente asignado.');
+    }
 </script>
 
 <?php include 'footer.php'; ?>

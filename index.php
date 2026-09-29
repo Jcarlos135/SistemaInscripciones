@@ -18,21 +18,37 @@ if (!in_array($action, $acciones_publicas) && !isset($_SESSION['usuario_id'])) {
 if (isset($_SESSION['usuario_id'])) {
     $rol = $_SESSION['rol_id'];
 
-    if (strpos($action, 'admin_') === 0 && $rol != 1) { header('Location: index.php?action=login'); exit; }
-    if (strpos($action, 'secretaria_') === 0 && $rol != 2) { header('Location: index.php?action=login'); exit; }
-    if (strpos($action, 'estudiante_') === 0 && $rol != 3) { header('Location: index.php?action=login'); exit; }
-    if (strpos($action, 'docente_') === 0 && $rol != 4) { header('Location: index.php?action=login'); exit; }
-    
-    // PERMISOS PARA REPORTES (Admin: 1, Secretaria: 2, Estudiante: 3, Docente: 4)
-    if ($action === 'generar_reporte' && $rol != 3) { header('Location: index.php?action=login'); exit; }
-    if ($action === 'reporte_estudiantes' && !in_array($rol, [1, 2, 3, 4])) { header('Location: index.php?action=login'); exit; }
-}
-if (in_array($action, ['reporte_estudiantes', 'secretaria_reporte_estudiantes', 'reporte_estudiante_gestion'])) {
-        if (!in_array($rol, [1, 2, 4])) {
-            header('Location: index.php?action=login');
-            exit;
-        }
+    if (strpos($action, 'admin_') === 0 && $rol != 1) {
+        header('Location: index.php?action=login');
+        exit;
     }
+    if (strpos($action, 'secretaria_') === 0 && $rol != 2) {
+        header('Location: index.php?action=login');
+        exit;
+    }
+    if (strpos($action, 'estudiante_') === 0 && $rol != 3) {
+        header('Location: index.php?action=login');
+        exit;
+    }
+    if (strpos($action, 'docente_') === 0 && $rol != 4) {
+        header('Location: index.php?action=login');
+        exit;
+    }
+
+    // PERMISOS PARA REPORTES
+    if ($action === 'generar_reporte' && $rol != 3) {
+        header('Location: index.php?action=login');
+        exit;
+    }
+}
+
+if (in_array($action, ['reporte_estudiantes', 'secretaria_reporte_estudiantes', 'reporte_estudiante_gestion'])) {
+    if (!in_array($rol ?? 0, [1, 2, 4])) {
+        header('Location: index.php?action=login');
+        exit;
+    }
+}
+
 // ============================================
 // PROCESAMIENTO DE FORMULARIOS (POST)
 // ============================================
@@ -40,16 +56,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // LOGIN
     if ($action === 'procesar_login') {
-        $usuario = trim($_POST['usuario']);
-        $clave = trim($_POST['clave']);
+        $usuario = trim($_POST['usuario'] ?? '');
+        $clave = trim($_POST['clave'] ?? '');
 
         if (empty($usuario) || empty($clave)) {
             $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => 'Todos los campos son obligatorios'];
-            header('Location: index.php?action=login');
+            header('Location: index.php?action=inicio');
             exit;
         }
 
         $datos = login($conn, $usuario, $clave);
+
+        //VALIDAR SI HAY ERROR
+        if (isset($datos['error'])) {
+            $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => $datos['msg']];
+            header('Location: index.php?action=inicio');
+            exit;
+        }
+
+        // LOGIN EXITOSO
 
         if ($datos) {
             $_SESSION['usuario_id'] = $datos['id'];
@@ -65,12 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             elseif ($datos['id_rol'] == 2) $redirect = 'secretaria_dashboard';
             elseif ($datos['id_rol'] == 4) $redirect = 'docente_dashboard';
             else $redirect = 'estudiante_dashboard';
-            
+
             header("Location: index.php?action=$redirect");
-            exit;
-        } else {
-            $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => 'Usuario o contraseña incorrectos.'];
-            header('Location: index.php?action=login');
             exit;
         }
     }
@@ -89,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         if ($ok) {
-            $_SESSION['alerta'] = ['tipo' => 'success', 'msg' => 'Docente registrado. Usuario: ' . trim($_POST['ci']) . ' / Clave: 123456'];
+            $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => 'Docente registrado. Usuario: ' . trim($_POST['ci']) . ' / Clave: 123456'];
         } else {
             $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => 'Error: el CI ya está registrado o faltan datos obligatorios.'];
         }
@@ -103,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cod_asig   = trim($_POST['cod_asig'] ?? '');
 
         $r = asignar_materia_docente($conn, $id_docente, $cod_asig);
-        $_SESSION['alerta'] = ['tipo' => $r['exito'] ? 'success' : 'danger', 'msg' => $r['msg']];
+        $_SESSION['alerta'] = ['tipo' => $r['exito'] ? 'danger' : 'danger', 'msg' => $r['msg']];
         header("Location: index.php?action=ver_materias_docente&id_docente=$id_docente");
         exit;
     }
@@ -113,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cod_asig   = trim($_POST['cod_asig'] ?? '');
 
         $r = quitar_materia_docente($conn, $id_docente, $cod_asig);
-        $_SESSION['alerta'] = ['tipo' => $r['exito'] ? 'success' : 'danger', 'msg' => $r['msg']];
+        $_SESSION['alerta'] = ['tipo' => $r['exito'] ? 'danger' : 'danger', 'msg' => $r['msg']];
         header("Location: index.php?action=ver_materias_docente&id_docente=$id_docente");
         exit;
     }
@@ -141,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $obs = isset($obs_array[$i]) ? $obs_array[$i] : '';
             $teorico = isset($teorico_array[$i]) ? $teorico_array[$i] : '';
             $practico = isset($practico_array[$i]) ? $practico_array[$i] : '';
-            
+
             $guardar = guardar_notas_bimestre_docente($conn, $ci_est_array[$i], $cod_asig, $docente['id_docente'], $bimestre, $teorico, $practico, $obs);
             if (!$guardar) {
                 $exito_total = false;
@@ -151,16 +172,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($exito_total) {
             mysqli_commit($conn);
-            $_SESSION['alerta'] = ['tipo' => 'success', 'msg' => "Notas del $bimestre° Bimestre guardadas correctamente."];
+            $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => "Notas del $bimestre Bimestre guardadas correctamente."];
         } else {
             mysqli_rollback($conn);
             $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => 'Error al guardar algunas notas.'];
         }
-        
+
         header("Location: index.php?action=docente_ver_estudiantes&cod_asig=$cod_asig&bimestre=$bimestre");
         exit;
     }
-    
+
     // DOCENTE: GUARDAR NOTAS VISTA ANUAL
     if ($action === 'docente_guardar_notas_anual' && isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 4) {
         $docente = obtener_docente_por_ci($conn, $_SESSION['usuario_nombre']);
@@ -172,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $cod_asig       = $_POST['cod_asig'];
         $ci_est_array   = $_POST['ci_est'] ?? [];
-        $segundo_array  = $_POST['segundo_turno'] ?? []; 
+        $segundo_array  = $_POST['segundo_turno'] ?? [];
         $exito_total    = true;
 
         foreach ($ci_est_array as $index => $ci) {
@@ -189,7 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($exito_total) {
-            $_SESSION['alerta'] = ['tipo' => 'success', 'msg' => 'Notas anuales guardadas correctamente.'];
+            $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => 'Notas anuales guardadas correctamente.'];
         } else {
             $_SESSION['alerta'] = ['tipo' => 'danger', 'msg' => 'Error al guardar algunas notas.'];
         }
@@ -220,7 +241,7 @@ if ($action === 'verificar_inscripcion') {
     if ($info['registrado']) {
         $d = $info['datos'];
         $ci_esc = limpiar($conn, $ci);
-        
+
         $q_tipo = "SELECT tipo FROM inscripcion WHERE ci_est = '$ci_esc' AND activo = 1 LIMIT 1";
         $r_tipo = mysqli_query($conn, $q_tipo);
         $tipo_data = $r_tipo ? mysqli_fetch_assoc($r_tipo) : null;
@@ -248,7 +269,10 @@ if ($action === 'verificar_inscripcion') {
 // ENRUTAMIENTO DE VISTAS (SWITCH)
 // ============================================
 switch ($action) {
-    case 'inicio': include 'views/inicio.php'; break;
+    case 'inicio':
+        include 'views/inicio.php';
+        break;
+
     case 'login':
         if (isset($_SESSION['usuario_id'])) {
             $rol = $_SESSION['rol_id'];
@@ -262,11 +286,15 @@ switch ($action) {
         include 'views/login.php';
         break;
 
-    case 'registro': include 'views/registro.php'; break;
+    case 'registro':
+        include 'views/registro.php';
+        break;
 
     // ADMIN
-    case 'admin_dashboard': include 'views/admin_dashboard.php'; break;
-    
+    case 'admin_dashboard':
+        include 'views/admin_dashboard.php';
+        break;
+
     // GESTIÓN DE DOCENTES (Admin y Secretaria)
     case 'gestion_docentes':
         if (isset($_SESSION['rol_id']) && ($_SESSION['rol_id'] == 1 || $_SESSION['rol_id'] == 2)) {
@@ -298,15 +326,19 @@ switch ($action) {
         break;
 
     // SECRETARIA
-    case 'secretaria_dashboard': include 'views/secretaria_dashboard.php'; break;
-    case 'secretaria_inscripcion': include 'views/secretaria_inscripcion.php'; break;
+    case 'secretaria_dashboard':
+        include 'views/secretaria_dashboard.php';
+        break;
+    case 'secretaria_inscripcion':
+        include 'views/secretaria_inscripcion.php';
+        break;
 
     // DOCENTE
     case 'docente_dashboard':
         if (isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 4) {
             $ci_docente = $_SESSION['usuario_nombre'];
             $docente = obtener_docente_por_ci($conn, $ci_docente);
-            
+
             $materias_asignadas = [];
             if ($docente) {
                 $mat_result = obtener_materias_docente($conn, $docente['id_docente']);
@@ -328,7 +360,7 @@ switch ($action) {
             $cod_asig = $_GET['cod_asig'];
             $bimestre = isset($_GET['bimestre']) ? (int)$_GET['bimestre'] : 1;
             $vista = $_GET['vista'] ?? 'bimestral';
-            
+
             $estudiantes = [];
             if ($docente) {
                 if ($vista === 'anual') {
@@ -349,23 +381,19 @@ switch ($action) {
         break;
 
     // ESTUDIANTE
-    case 'estudiante_dashboard': include 'views/estudiante_dashboard.php'; break;
+    case 'estudiante_dashboard':
+        include 'views/estudiante_dashboard.php';
+        break;
+
     case 'generar_reporte':
-        if (isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 3) include 'reports/reporte.php';
-        else header('Location: index.php?action=login');
-        break;
-
-    // NUEVO: REPORTE ACADÉMICO DE ESTUDIANTES (PDF)
-    case 'reporte_estudiantes':
-        if (ob_get_length()) {
-            ob_end_clean(); 
+        if (isset($_SESSION['rol_id']) && $_SESSION['rol_id'] == 3) {
+            include 'reports/reporte.php';
+        } else {
+            header('Location: index.php?action=login');
         }
-        include 'reports/reporte_estudiantes.php';
         break;
 
-    default: include 'views/inicio.php'; break;
-
-    // REPORTE PDF
+    // REPORTES PDF (Limpiados y unificados sin duplicaciones)
     case 'reporte_estudiantes':
         if (ob_get_length()) {
             ob_end_clean();
@@ -380,5 +408,9 @@ switch ($action) {
         }
         include 'reports/reporte_estudiante_gestion.php';
         exit;
+        break;
+
+    default:
+        include 'views/inicio.php';
         break;
 }
