@@ -13,20 +13,62 @@ if (!$datos_est || $datos_est['activo'] == 0) {
     exit;
 }
 
+// =====================================================
+// OBTENER TIPO DE ESTUDIANTE (BTH, Regular, Beca) Y ESTADO
+// =====================================================
+$ci_sesion = limpiar($conn, $_SESSION['estudiante_ci']);
+
+// Obtener el tipo más reciente (BTH tiene prioridad si existe)
+$q_tipo = mysqli_query($conn, "SELECT tipo, COUNT(*) AS veces 
+                               FROM inscripcion 
+                               WHERE ci_est = '$ci_sesion' 
+                               GROUP BY tipo 
+                               ORDER BY FIELD(tipo, 'BTH', 'Beca', 'Regular'), veces DESC 
+                               LIMIT 1");
+$row_tipo = $q_tipo ? mysqli_fetch_assoc($q_tipo) : null;
+$tipo_estudiante = $row_tipo['tipo'] ?? 'Regular';
+
+// Verificar si tiene inscripciones activas
+$q_activas = mysqli_query($conn, "SELECT COUNT(*) AS total FROM inscripcion 
+                                  WHERE ci_est = '$ci_sesion' AND activo = 1");
+$total_activas = $q_activas ? (int)mysqli_fetch_assoc($q_activas)['total'] : 0;
+
+// Determinar si está retirado
+$es_retirado = ($datos_est['activo'] == 0) || ($total_activas == 0);
+
+// Texto y color del badge
+if ($es_retirado) {
+    $tipo_label = 'RETIRADO';
+    $tipo_color = '#6c757d'; // Gris
+} elseif (strtoupper($tipo_estudiante) === 'BTH') {
+    $tipo_label = 'BTH';
+    $tipo_color = '#0d6efd'; // Azul
+} elseif (strtoupper($tipo_estudiante) === 'BECA') {
+    $tipo_label = 'BECA';
+    $tipo_color = '#ffc107'; // Amarillo
+} else {
+    $tipo_label = 'REGULAR';
+    $tipo_color = '#198754'; // Verde
+}
+
 // 2. OBTENER GESTIÓN SELECCIONADA Y FILTRAR
 $gestion_seleccionada = $_GET['gestion'] ?? null;
 $inscripciones = listar_inscripciones_estudiante($conn, $_SESSION['estudiante_ci'], $gestion_seleccionada);
 
-// Obtener lista de gestiones disponibles para el combo box
-$gestiones_query = mysqli_query($conn, "SELECT DISTINCT COALESCE(h.gestion, a.gestion) as gestion 
+// =====================================================
+// OBTENER LISTA DE GESTIONES DISPONIBLES (CORREGIDO)
+// =====================================================
+$gestiones_query = mysqli_query($conn, "SELECT DISTINCT i.gestion AS gestion
                                         FROM inscripcion i
-                                        INNER JOIN asignatura a ON a.codigo = i.cod_asig
-                                        LEFT JOIN historial h ON h.ci_est = i.ci_est AND h.cod_asig = i.cod_asig
-                                        WHERE i.ci_est = '" . limpiar($conn, $_SESSION['estudiante_ci']) . "' AND i.activo = 1
-                                        ORDER BY gestion DESC");
+                                        WHERE i.ci_est = '" . limpiar($conn, $_SESSION['estudiante_ci']) . "' 
+                                          AND i.activo = 1
+                                          AND i.gestion IS NOT NULL
+                                        ORDER BY i.gestion DESC");
 $gestiones = [];
-while ($g = mysqli_fetch_assoc($gestiones_query)) {
-    if ($g['gestion']) $gestiones[] = $g['gestion'];
+if ($gestiones_query) {
+    while ($g = mysqli_fetch_assoc($gestiones_query)) {
+        if ($g['gestion']) $gestiones[] = $g['gestion'];
+    }
 }
 
 function verNota($val)
@@ -88,12 +130,26 @@ if ($total_materias > 0) {
 }
 ?>
 <link rel="stylesheet" href="/sig/public/css/estudiante_dashboard.css">
+
+<!-- =====================================================
+     ENCABEZADO DEL ESTUDIANTE CON BADGE DE TIPO
+     ===================================================== -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card bg-danger text-white shadow">
             <div class="card-body">
-                <h3><i class="bi bi-person-badge"></i> Bienvenido(a), <?= htmlspecialchars(($datos_est['nombre'] ?? '') . ' ' . ($datos_est['ap_pat'] ?? '')) ?></h3>
-                <p class="mb-0">CI: <?= htmlspecialchars($datos_est['ci'] ?? '') ?> | Carrera: <?= htmlspecialchars($datos_est['carrera_nombre'] ?? '') ?></p>
+                <h3 class="mb-2">
+                    <i class="bi bi-person-badge"></i>
+                    Bienvenido(a), <?= htmlspecialchars(($datos_est['nombre'] ?? '') . ' ' . ($datos_est['ap_pat'] ?? '')) ?>
+                    <span style="display: inline-block; padding: 5px 14px; border-radius: 20px; background: <?= $tipo_color ?>; color: white; font-size: 0.72rem; font-weight: bold; vertical-align: middle; margin-left: 12px; letter-spacing: 0.5px;">
+                        <?= htmlspecialchars($tipo_label) ?>
+                    </span>
+                </h3>
+                <p class="mb-0">
+                    CI: <?= htmlspecialchars($datos_est['ci'] ?? '') ?> |
+                    Carrera: <?= htmlspecialchars($datos_est['carrera_nombre'] ?? '') ?> |
+                    Estado: <strong><?= $datos_est['activo'] == 1 ? 'Activo' : 'Inactivo' ?></strong>
+                </p>
             </div>
         </div>
     </div>
@@ -162,6 +218,7 @@ if ($total_materias > 0) {
                             $total_anual = $i['nota_final'] ?? null;
                             $es_segundo_turno = isset($i['segundo_turno']) && $i['segundo_turno'] == 1;
                             $literal = $i['literal'] ?? null;
+                            $es_convalidado = (strtoupper(trim($literal)) === 'CONVALIDADO');
                         ?>
                             <tr>
                                 <td><strong><?= htmlspecialchars($i['asig_codigo'] ?? '-') ?></strong></td>
@@ -185,14 +242,16 @@ if ($total_materias > 0) {
 
                                 <td class="fw-bold text-primary"><?= verNota($nota_parcial) ?></td>
 
-                                <td class="fs-6 fw-bold <?= ($total_anual !== null && (float)$total_anual < 51 && !$es_segundo_turno) ? 'text-danger' : 'text-danger' ?>">
-                                    <?= verNota($total_anual) ?>
+                                <td class="fs-6 fw-bold text-danger">
+                                    <?= $es_convalidado ? 'CONVALIDADO' : verNota($total_anual) ?>
                                 </td>
 
                                 <td class="fw-bold text-dark"><?= verNota($literal) ?></td>
 
                                 <td>
-                                    <?php if ($estado_materia === 'APROBADO'): ?>
+                                    <?php if ($es_convalidado): ?>
+                                        <span class="badge" style="background: #0d6efd; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem;">Convalidado</span>
+                                    <?php elseif ($estado_materia === 'APROBADO'): ?>
                                         <span class="badge-aprobado">Aprobado</span>
                                     <?php elseif ($estado_materia === 'REPROBADO' && $es_segundo_turno): ?>
                                         <span class="badge-2doturno">2do Turno</span>

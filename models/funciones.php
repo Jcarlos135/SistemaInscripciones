@@ -418,22 +418,36 @@ function registrar_inscripcion($conn, $ci_est, $cod_asig, $id_sec, $turno, $grup
 function listar_inscripciones_estudiante($conn, $ci_est, $gestion_filtro = null)
 {
     $ci = limpiar($conn, $ci_est);
-    $gestion_cond = $gestion_filtro ? " AND COALESCE(h.gestion, a.gestion) = '" . limpiar($conn, $gestion_filtro) . "'" : "";
+    $gestion_cond = '';
+    if ($gestion_filtro) {
+        $gestion_cond = " AND i.gestion = '" . limpiar($conn, $gestion_filtro) . "'";
+    }
 
-    $sql = "SELECT a.codigo AS asig_codigo, a.nombre AS asig_nombre,
-                   h.nota_teorico1, h.nota_pract1, h.nota_primerbim,
-                   h.nota_teorico2, h.nota_pract2, h.nota_segundobim,
-                   h.nota_teorico3, h.nota_pract3, h.nota_tercerbim,
-                   h.nota_teorico4, h.nota_pract4, h.nota_cuartobim,
-                   h.nota_parcial, h.TotalAnual AS nota_final, h.segundo_turno, h.estado, h.literal,
-                   COALESCE(h.gestion, a.gestion) AS gestion,
-                   i.estado_final AS condicion_global
+    $sql = "SELECT 
+                h.id AS hist_id,
+                h.ci_est,
+                i.cod_asig AS asig_codigo,
+                a.nombre AS asig_nombre,
+                a.nivel,
+                h.nota_teorico1, h.nota_pract1, h.nota_primerbim,
+                h.nota_teorico2, h.nota_pract2, h.nota_segundobim,
+                h.nota_teorico3, h.nota_pract3, h.nota_tercerbim,
+                h.nota_teorico4, h.nota_pract4, h.nota_cuartobim,
+                h.nota_parcial, h.TotalAnual AS nota_final,
+                h.segundo_turno, h.estado, h.literal,
+                h.gestion AS hist_gestion,
+                i.gestion AS gestion,
+                i.estado_final AS condicion_global
             FROM inscripcion i
             INNER JOIN asignatura a ON a.codigo = i.cod_asig
-            LEFT JOIN historial h ON h.id = (SELECT MAX(h2.id) FROM historial h2
-                                            WHERE h2.ci_est = i.ci_est AND h2.cod_asig = i.cod_asig)
-            WHERE i.ci_est = '$ci' AND i.activo = 1 $gestion_cond
-            ORDER BY a.codigo";
+            LEFT JOIN historial h 
+                ON h.ci_est = i.ci_est 
+                AND h.cod_asig = i.cod_asig 
+                AND h.gestion = i.gestion
+            WHERE i.ci_est = '$ci' 
+              AND i.activo = 1 
+              $gestion_cond
+            ORDER BY a.nivel, a.codigo";
     return mysqli_query($conn, $sql);
 }
 

@@ -19,7 +19,7 @@ foreach ($prerequisitos_raw as $p) {
     $prerequisitos[$p['cod_asig']] = $p['cod_req'];
 }
 
-// Clasificar asignaturas por año según su nivel (100 = Primer Año, 200 = Segundo Año, 300 = Tercer Año)
+// Clasificar asignaturas por año según su nivel
 $primer_anio = [];
 $segundo_anio = [];
 $tercer_anio = [];
@@ -45,10 +45,17 @@ class PDF extends FPDF
 {
     function Header()
     {
-        // Encabezado superior institucional (gris oscuro)
-        $this->SetFillColor(90, 90, 90);
+        // =====================================================
+        // ENCABEZADO PRINCIPAL EN ROJO OSCURO
+        // =====================================================
+        $this->SetFillColor(100, 0, 0); // Rojo oscuro
         $this->Rect(10, 10, 277, 28, 'F');
 
+        // Línea roja brillante inferior
+        $this->SetFillColor(180, 0, 0);
+        $this->Rect(10, 38, 277, 1.5, 'F');
+
+        // Título PLAN DE ESTUDIOS (izquierda)
         $this->SetFont('Arial', 'B', 11);
         $this->SetTextColor(255, 255, 255);
         $this->SetXY(12, 12);
@@ -62,19 +69,24 @@ class PDF extends FPDF
         $this->SetXY(12, 28);
         $this->Cell(95, 4, utf8_decode('CARGA HORARIA: 3600 Hrs.'), 0, 1, 'C');
 
+        // Título CARRERA (derecha)
         $this->SetFont('Arial', 'B', 12);
         $this->SetXY(110, 12);
         $this->Cell(175, 7, utf8_decode('CARRERA: SISTEMAS INFORMÁTICOS'), 0, 1, 'C');
 
         $this->SetFont('Arial', 'B', 9);
         $this->SetXY(110, 20);
-        $this->MultiCell(175, 4, utf8_decode('DENOMINACIÓN DEL TÍTULO PROFESIONAL:\nTÉCNICO SUPERIOR EN SISTEMAS INFORMÁTICOS'), 0, 'C');
+        $this->MultiCell(175, 4, utf8_decode('DENOMINACIÓN DEL TÍTULO PROFESIONAL:
+TÉCNICO SUPERIOR EN SISTEMAS INFORMÁTICOS'), 0, 'C');
 
-        // Franja de horas
-        $this->SetFillColor(210, 210, 210);
-        $this->SetTextColor(0, 0, 0);
+        // =====================================================
+        // FRANJA DE HORAS EN ROJO CLARO
+        // =====================================================
+        $this->SetFillColor(255, 240, 240); // Rojo muy claro
+        $this->SetDrawColor(180, 0, 0);      // Borde rojo
+        $this->SetTextColor(180, 0, 0);      // Texto rojo
         $this->SetFont('Arial', 'B', 8);
-        $this->SetXY(10, 39);
+        $this->SetXY(10, 40);
         $this->Cell(277, 5, utf8_decode('HORAS SEMANA: 30  -  HORAS MES: 120  -  HORAS AÑO: 1200'), 1, 1, 'C', true);
         $this->Ln(2);
     }
@@ -83,7 +95,7 @@ class PDF extends FPDF
     {
         $this->SetY(-18);
         $this->SetFont('Arial', '', 6.5);
-        $this->SetTextColor(70, 70, 70);
+        $this->SetTextColor(100, 0, 0); // Rojo oscuro para el texto del pie
         $nota = utf8_decode('Nota: Los Valores Sociocomunitarios, descolonización y despatriarcalización, cuidado del medio ambiente, prevención de la violencia de género, ética profesional, y la articulación con los sectores sociales y productivo bajo un enfoque de emprendimiento, deben ser desarrolladas en todas las asignaturas por las y los docentes para la formación integral de las y los estudiantes.');
         $this->MultiCell(277, 3.5, $nota, 0, 'L');
     }
@@ -94,19 +106,24 @@ $pdf = new PDF('L', 'mm', 'A4');
 $pdf->AddPage();
 $pdf->SetAutoPageBreak(false);
 
-// Cabeceras de Años
-$pdf->SetY(46);
+// =====================================================
+// CABECERAS DE AÑOS EN ROJO
+// =====================================================
+$pdf->SetY(48);
 $pdf->SetFont('Arial', 'B', 9);
-$pdf->SetFillColor(100, 100, 100);
+$pdf->SetFillColor(180, 0, 0); // Rojo brillante
 $pdf->SetTextColor(255, 255, 255);
 
 $pdf->Cell(62, 6, utf8_decode('PRIMER AÑO'), 1, 0, 'C', true);
 $pdf->Cell(105, 6, utf8_decode('SEGUNDO AÑO'), 1, 0, 'C', true);
 $pdf->Cell(110, 6, utf8_decode('TERCER AÑO'), 1, 1, 'C', true);
 
-// Sub-cabeceras de columnas
-$pdf->SetFillColor(235, 235, 235);
-$pdf->SetTextColor(0, 0, 0);
+// =====================================================
+// SUB-CABECERAS DE COLUMNAS EN ROJO CLARO
+// =====================================================
+$pdf->SetFillColor(255, 240, 240); // Rojo muy claro
+$pdf->SetDrawColor(180, 0, 0);      // Borde rojo
+$pdf->SetTextColor(100, 0, 0);      // Texto rojo oscuro
 $pdf->SetFont('Arial', 'B', 7.5);
 
 // Primer Año
@@ -126,46 +143,58 @@ $pdf->Cell(74, 5, utf8_decode('ASIGNATURAS'), 1, 0, 'C', true);
 $pdf->Cell(6,  5, utf8_decode('HR'), 1, 0, 'C', true);
 $pdf->Cell(14, 5, utf8_decode('P.REQ'), 1, 1, 'C', true);
 
-// Iterar filas dinámicamente según la cantidad máxima de materias entre los años
+// =====================================================
+// FILAS DE DATOS CON ALTERNANCIA BLANCO / ROJO CLARO
+// =====================================================
 $max_rows = max(count($primer_anio), count($segundo_anio), count($tercer_anio));
 
 $pdf->SetFont('Arial', '', 7.5);
+$pdf->SetDrawColor(180, 0, 0); // Bordes rojos en toda la tabla
+
 for ($i = 0; $i < $max_rows; $i++) {
+    // Alternar fondo: blanco / rojo muy claro
+    $fill = ($i % 2 == 0) ? true : true;
+    $bg = ($i % 2 == 0) ? 255 : 255; // 255 = blanco puro
+    $bg_g = ($i % 2 == 0) ? 255 : 240;
+    $bg_b = ($i % 2 == 0) ? 255 : 240;
+    $pdf->SetFillColor($bg, $bg_g, $bg_b);
+    $pdf->SetTextColor(30, 30, 30);
+
     // Primer Año
     if (isset($primer_anio[$i])) {
-        $pdf->Cell(16, 5.5, utf8_decode($primer_anio[$i]['codigo']), 1, 0, 'C');
-        $pdf->Cell(40, 5.5, utf8_decode($primer_anio[$i]['nombre']), 1, 0, 'L');
-        $pdf->Cell(6,  5.5, utf8_decode($primer_anio[$i]['horas']), 1, 0, 'C');
+        $pdf->Cell(16, 5.5, utf8_decode($primer_anio[$i]['codigo']), 1, 0, 'C', true);
+        $pdf->Cell(40, 5.5, utf8_decode($primer_anio[$i]['nombre']), 1, 0, 'L', true);
+        $pdf->Cell(6,  5.5, utf8_decode($primer_anio[$i]['horas']), 1, 0, 'C', true);
     } else {
-        $pdf->Cell(16, 5.5, '', 1, 0, 'C');
-        $pdf->Cell(40, 5.5, '', 1, 0, 'L');
-        $pdf->Cell(6,  5.5, '', 1, 0, 'C');
+        $pdf->Cell(16, 5.5, '', 1, 0, 'C', true);
+        $pdf->Cell(40, 5.5, '', 1, 0, 'L', true);
+        $pdf->Cell(6,  5.5, '', 1, 0, 'C', true);
     }
 
     // Segundo Año
     if (isset($segundo_anio[$i])) {
-        $pdf->Cell(16, 5.5, utf8_decode($segundo_anio[$i]['codigo']), 1, 0, 'C');
-        $pdf->Cell(71, 5.5, utf8_decode($segundo_anio[$i]['nombre']), 1, 0, 'L');
-        $pdf->Cell(6,  5.5, utf8_decode($segundo_anio[$i]['horas']), 1, 0, 'C');
-        $pdf->Cell(12, 5.5, utf8_decode($segundo_anio[$i]['prereq']), 1, 0, 'C');
+        $pdf->Cell(16, 5.5, utf8_decode($segundo_anio[$i]['codigo']), 1, 0, 'C', true);
+        $pdf->Cell(71, 5.5, utf8_decode($segundo_anio[$i]['nombre']), 1, 0, 'L', true);
+        $pdf->Cell(6,  5.5, utf8_decode($segundo_anio[$i]['horas']), 1, 0, 'C', true);
+        $pdf->Cell(12, 5.5, utf8_decode($segundo_anio[$i]['prereq']), 1, 0, 'C', true);
     } else {
-        $pdf->Cell(16, 5.5, '', 1, 0, 'C');
-        $pdf->Cell(71, 5.5, '', 1, 0, 'L');
-        $pdf->Cell(6,  5.5, '', 1, 0, 'C');
-        $pdf->Cell(12, 5.5, '', 1, 0, 'C');
+        $pdf->Cell(16, 5.5, '', 1, 0, 'C', true);
+        $pdf->Cell(71, 5.5, '', 1, 0, 'L', true);
+        $pdf->Cell(6,  5.5, '', 1, 0, 'C', true);
+        $pdf->Cell(12, 5.5, '', 1, 0, 'C', true);
     }
 
     // Tercer Año
     if (isset($tercer_anio[$i])) {
-        $pdf->Cell(16, 5.5, utf8_decode($tercer_anio[$i]['codigo']), 1, 0, 'C');
-        $pdf->Cell(74, 5.5, utf8_decode($tercer_anio[$i]['nombre']), 1, 0, 'L');
-        $pdf->Cell(6,  5.5, utf8_decode($tercer_anio[$i]['horas']), 1, 0, 'C');
-        $pdf->Cell(14, 5.5, utf8_decode($tercer_anio[$i]['prereq']), 1, 1, 'C');
+        $pdf->Cell(16, 5.5, utf8_decode($tercer_anio[$i]['codigo']), 1, 0, 'C', true);
+        $pdf->Cell(74, 5.5, utf8_decode($tercer_anio[$i]['nombre']), 1, 0, 'L', true);
+        $pdf->Cell(6,  5.5, utf8_decode($tercer_anio[$i]['horas']), 1, 0, 'C', true);
+        $pdf->Cell(14, 5.5, utf8_decode($tercer_anio[$i]['prereq']), 1, 1, 'C', true);
     } else {
-        $pdf->Cell(16, 5.5, '', 1, 0, 'C');
-        $pdf->Cell(74, 5.5, '', 1, 0, 'L');
-        $pdf->Cell(6,  5.5, '', 1, 0, 'C');
-        $pdf->Cell(14, 5.5, '', 1, 1, 'C');
+        $pdf->Cell(16, 5.5, '', 1, 0, 'C', true);
+        $pdf->Cell(74, 5.5, '', 1, 0, 'L', true);
+        $pdf->Cell(6,  5.5, '', 1, 0, 'C', true);
+        $pdf->Cell(14, 5.5, '', 1, 1, 'C', true);
     }
 }
 

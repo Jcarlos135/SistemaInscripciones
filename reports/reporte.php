@@ -59,26 +59,22 @@ if (!file_exists($logo_path)) {
 class PDF extends FPDF
 {
     public $instituto = 'INSTITUTO TECNOLÓGICO SUPERIOR';
-    public $titulo = 'FICHA ACADÉMICA DEL ESTUDIANTE POR AÑO';
+    public $titulo = 'FICHA ACADÉMICA DEL ESTUDIANTE';
     public $logo_path = '';
 
     function Header()
     {
-        // Fondo rojo principal
         $this->SetFillColor(180, 0, 0);
         $this->Rect(0, 0, 216, 24, 'F');
-        // Línea más oscura inferior
         $this->SetFillColor(100, 0, 0);
         $this->Rect(0, 24, 216, 2, 'F');
 
-        // Logo (si existe)
         $x_texto = 12;
         if (!empty($this->logo_path) && file_exists($this->logo_path)) {
             $this->Image($this->logo_path, 10, 3, 18, 18);
             $x_texto = 32;
         }
 
-        // Texto institucional
         $this->SetTextColor(255);
         $this->SetFont('Helvetica', 'B', 12);
         $this->SetXY($x_texto, 4);
@@ -87,7 +83,6 @@ class PDF extends FPDF
         $this->SetXY($x_texto, 12);
         $this->Cell(150, 5, textoPDF($this->titulo), 0, 0, 'L');
 
-        // Fecha emisión (derecha)
         $this->SetFont('Helvetica', '', 8);
         $this->SetXY(-55, 6);
         $this->Cell(45, 5, textoPDF('Emision: ') . date('d/m/Y'), 0, 2, 'R');
@@ -107,7 +102,7 @@ class PDF extends FPDF
 // =====================================================
 // DATOS DEL ESTUDIANTE
 // =====================================================
-$resEst = mysqli_query($conn, "SELECT e.ci, e.nombre, e.ap_pat, e.ap_mat, e.img, e.id_usuario,
+$resEst = mysqli_query($conn, "SELECT e.ci, e.nombre, e.ap_pat, e.ap_mat, e.img, e.id_usuario, e.id_carrera,
                                        c.nombre AS carrera, c.resolucion
                                 FROM estudiante e
                                 LEFT JOIN carrera c ON c.id = e.id_carrera
@@ -118,7 +113,7 @@ if (!$est) {
 }
 
 // =====================================================
-// OBTENER CONTRASEÑA DEL USUARIO
+// CONTRASEÑA DEL USUARIO
 // =====================================================
 $clave_usuario = '';
 $usuario_login = '';
@@ -131,7 +126,6 @@ if ($id_usr_est > 0) {
         $clave_usuario = $rowPass['clave'];
     }
 }
-// Fallback: buscar por CI
 if (empty($clave_usuario)) {
     $resPass = mysqli_query($conn, "SELECT usuario, clave FROM usuario WHERE usuario = '$ci' LIMIT 1");
     if ($resPass && $rowPass = mysqli_fetch_assoc($resPass)) {
@@ -144,27 +138,73 @@ if (empty($clave_usuario)) $clave_usuario = '(no asignada)';
 
 $nombreCompleto = trim(($est['nombre'] ?? '') . ' ' . ($est['ap_pat'] ?? '') . ' ' . ($est['ap_mat'] ?? ''));
 
-$gestion_filtro = $_GET['gestion'] ?? date('Y');
+// =====================================================
+// DETECTAR MODO: ¿Gestión específica o TODAS?
+// =====================================================
+$gestion_filtro = isset($_GET['gestion']) && trim($_GET['gestion']) !== ''
+    ? trim($_GET['gestion'])
+    : null;
+
+$modo_todas = ($gestion_filtro === null);
 
 // =====================================================
-// CONSULTA DE HISTORIAL
+// CONSULTA DE HISTORIAL (según modo)
 // =====================================================
-$q_hist = "SELECT h.*, a.nombre AS materia_nombre, a.codigo AS cod_asignatura, a.nivel
-           FROM inscripcion i
-           INNER JOIN asignatura a ON a.codigo = i.cod_asig
-           LEFT JOIN historial h ON h.id = (SELECT MAX(h2.id) FROM historial h2
-                           WHERE h2.ci_est = i.ci_est AND h2.cod_asig = i.cod_asig)
-           WHERE i.ci_est = '$ci' AND i.activo = 1 
-             AND COALESCE(h.gestion, a.gestion, '$gestion_filtro') = '$gestion_filtro'
-           ORDER BY a.codigo ASC";
+if ($modo_todas) {
+    // TODAS las gestiones
+    $q_hist = "SELECT 
+                    h.id AS hist_id,
+                    i.gestion AS gestion,
+                    i.cod_asig AS cod_asignatura,
+                    a.nombre AS materia_nombre,
+                    a.nivel,
+                    h.nota_teorico1, h.nota_pract1, h.nota_primerbim,
+                    h.nota_teorico2, h.nota_pract2, h.nota_segundobim,
+                    h.nota_teorico3, h.nota_pract3, h.nota_tercerbim,
+                    h.nota_teorico4, h.nota_pract4, h.nota_cuartobim,
+                    h.nota_parcial, h.segundo_turno, h.TotalAnual,
+                    h.literal, h.observaciones, h.estado, h.id_docente
+               FROM inscripcion i
+               INNER JOIN asignatura a ON a.codigo = i.cod_asig
+               LEFT JOIN historial h 
+                    ON h.ci_est = i.ci_est 
+                    AND h.cod_asig = i.cod_asig 
+                    AND h.gestion = i.gestion
+               WHERE i.ci_est = '$ci' 
+                 AND i.activo = 1
+               ORDER BY i.gestion ASC, a.nivel ASC, a.codigo ASC";
+} else {
+    // Gestión específica
+    $q_hist = "SELECT 
+                    h.id AS hist_id,
+                    i.gestion AS gestion,
+                    i.cod_asig AS cod_asignatura,
+                    a.nombre AS materia_nombre,
+                    a.nivel,
+                    h.nota_teorico1, h.nota_pract1, h.nota_primerbim,
+                    h.nota_teorico2, h.nota_pract2, h.nota_segundobim,
+                    h.nota_teorico3, h.nota_pract3, h.nota_tercerbim,
+                    h.nota_teorico4, h.nota_pract4, h.nota_cuartobim,
+                    h.nota_parcial, h.segundo_turno, h.TotalAnual,
+                    h.literal, h.observaciones, h.estado, h.id_docente
+               FROM inscripcion i
+               INNER JOIN asignatura a ON a.codigo = i.cod_asig
+               LEFT JOIN historial h 
+                    ON h.ci_est = i.ci_est 
+                    AND h.cod_asig = i.cod_asig 
+                    AND h.gestion = i.gestion
+               WHERE i.ci_est = '$ci' 
+                 AND i.activo = 1
+                 AND i.gestion = '$gestion_filtro'
+               ORDER BY a.nivel ASC, a.codigo ASC";
+}
 $res_hist = mysqli_query($conn, $q_hist);
 
-$materias_por_anio = [
-    '1' => [],
-    '2' => [],
-    '3' => [],
-    'X' => []
-];
+// =====================================================
+// AGRUPAR DATOS
+// =====================================================
+$datos_por_gestion = []; // Para modo todas
+$materias_por_anio = ['1' => [], '2' => [], '3' => [], 'X' => []]; // Para gestión específica
 
 $total_materias = 0;
 $aprobadas = 0;
@@ -173,15 +213,6 @@ $convalidadas = 0;
 
 if ($res_hist && mysqli_num_rows($res_hist) > 0) {
     while ($m = mysqli_fetch_assoc($res_hist)) {
-        $codigo = trim($m['cod_asignatura']);
-        preg_match('/\d/', $codigo, $matches);
-        $digito = isset($matches[0]) ? $matches[0] : 'X';
-
-        if (array_key_exists($digito, $materias_por_anio)) {
-            $materias_por_anio[$digito][] = $m;
-        } else {
-            $materias_por_anio['X'][] = $m;
-        }
         $total_materias++;
 
         $literal = strtoupper(trim($m['literal'] ?? ''));
@@ -195,6 +226,23 @@ if ($res_hist && mysqli_num_rows($res_hist) > 0) {
         } else {
             $reprobadas++;
         }
+
+        if ($modo_todas) {
+            $g = $m['gestion'] ?? 'SIN GESTION';
+            if (!isset($datos_por_gestion[$g])) {
+                $datos_por_gestion[$g] = [];
+            }
+            $datos_por_gestion[$g][] = $m;
+        } else {
+            $codigo = trim($m['cod_asignatura']);
+            preg_match('/\d/', $codigo, $matches);
+            $digito = isset($matches[0]) ? $matches[0] : 'X';
+            if (array_key_exists($digito, $materias_por_anio)) {
+                $materias_por_anio[$digito][] = $m;
+            } else {
+                $materias_por_anio['X'][] = $m;
+            }
+        }
     }
 }
 
@@ -205,16 +253,19 @@ $nombres_anios = [
     'X' => 'OTROS NIVELES'
 ];
 
+// =====================================================
+// INICIALIZAR PDF
+// =====================================================
 $pdf = new PDF('P', 'mm', 'Letter');
 $pdf->logo_path = $logo_path;
 $pdf->AliasNbPages();
 $pdf->SetAutoPageBreak(true, 14);
 $pdf->SetMargins(12, 0, 12);
-$pdf->SetTitle('Reporte Ficha Académica - CI ' . $ci);
+$pdf->SetTitle('Ficha Académica - CI ' . $ci);
 $pdf->AddPage();
 
 // =====================================================
-// CUADRO DE DATOS DEL ESTUDIANTE (rojo/blanco)
+// CUADRO DE DATOS DEL ESTUDIANTE
 // =====================================================
 $pdf->SetFillColor(255, 240, 240);
 $pdf->SetDrawColor(180, 0, 0);
@@ -227,9 +278,11 @@ $pdf->SetFont('Helvetica', 'B', 10);
 $pdf->Cell(185, 5, textoPDF($nombreCompleto), 0, 2);
 $pdf->SetFont('Helvetica', '', 8.5);
 $pdf->Cell(185, 5, textoPDF('CI: ' . $est['ci'] . ' | Carrera: ' . ($est['carrera'] ?? 'Sin Asignar') . ' | Resolucion: ' . ($est['resolucion'] ?? '-')), 0, 2);
-$pdf->Cell(185, 5, textoPDF('Gestion Evaluada: ' . $gestion_filtro . ' | Nota minima de aprobacion: 61'), 0, 2);
 
-// Usuario y contraseña (en rojo)
+// Mostrar gestión evaluada o "TODAS LAS GESTIONES"
+$texto_gestion = $modo_todas ? 'TODAS LAS GESTIONES' : $gestion_filtro;
+$pdf->Cell(185, 5, textoPDF('Gestion Evaluada: ' . $texto_gestion . ' | Nota minima de aprobacion: 61'), 0, 2);
+
 $pdf->SetFont('Helvetica', 'B', 8.5);
 $pdf->SetTextColor(180, 0, 0);
 $pdf->Cell(185, 5, textoPDF('Usuario: ' . $usuario_login . '   |   Contraseña: ' . $clave_usuario), 0, 0);
@@ -239,123 +292,272 @@ $pdf->SetY(62);
 $h = 6;
 $hay_registros = false;
 
-foreach ($materias_por_anio as $key => $lista_materias) {
-    if (empty($lista_materias)) continue;
-    $hay_registros = true;
+// =====================================================
+// RENDERIZAR TABLAS
+// =====================================================
 
-    // Encabezado del año (rojo oscuro)
-    $pdf->SetFont('Helvetica', 'B', 9);
-    $pdf->SetFillColor(180, 0, 0);
-    $pdf->SetTextColor(255);
-    $pdf->Cell(192, 7, textoPDF('MATERIAS DE ' . $nombres_anios[$key]), 1, 1, 'L', true);
+// ---------- MODO TODAS LAS GESTIONES ----------
+if ($modo_todas) {
+    if (!empty($datos_por_gestion)) {
+        foreach ($datos_por_gestion as $gestion => $materias) {
+            $hay_registros = true;
 
-    // Encabezado de columnas (rojo más oscuro)
-    $pdf->SetFillColor(100, 0, 0);
-    $pdf->SetTextColor(255);
-    $pdf->SetFont('Helvetica', 'B', 8);
-    $pdf->Cell(25, $h, textoPDF('CODIGO'), 1, 0, 'C', true);
-    $pdf->Cell(102, $h, textoPDF('MATERIA / ASIGNATURA'), 1, 0, 'L', true);
-    $pdf->Cell(30, $h, textoPDF('NOTA ANUAL'), 1, 0, 'C', true);
-    $pdf->Cell(35, $h, textoPDF('CONDICION'), 1, 1, 'C', true);
+            // Encabezado de la gestión
+            $pdf->SetFont('Helvetica', 'B', 10);
+            $pdf->SetFillColor(180, 0, 0);
+            $pdf->SetTextColor(255);
+            $pdf->Cell(192, 8, textoPDF('GESTIÓN ' . $gestion), 1, 1, 'C', true);
 
-    $fill = false;
-    foreach ($lista_materias as $m) {
-        $fondo = ($fill) ? [255, 240, 240] : [255, 255, 255];
-        $pdf->SetFillColor($fondo[0], $fondo[1], $fondo[2]);
-        $pdf->SetTextColor(30);
-        $pdf->SetFont('Helvetica', '', 8);
+            // Encabezado de columnas
+            $pdf->SetFillColor(100, 0, 0);
+            $pdf->SetTextColor(255);
+            $pdf->SetFont('Helvetica', 'B', 8);
+            $pdf->Cell(25, $h, textoPDF('CODIGO'), 1, 0, 'C', true);
+            $pdf->Cell(102, $h, textoPDF('MATERIA / ASIGNATURA'), 1, 0, 'L', true);
+            $pdf->Cell(30, $h, textoPDF('NOTA ANUAL'), 1, 0, 'C', true);
+            $pdf->Cell(35, $h, textoPDF('CONDICION'), 1, 1, 'C', true);
 
-        $literal = strtoupper(trim($m['literal'] ?? ''));
-        $nota = (int)($m['TotalAnual'] ?? 0);
-        $es_convalidado = ($literal === 'CONVALIDADO');
+            $fill = false;
+            $materias_aprobadas_g = 0;
+            $materias_reprobadas_g = 0;
+            $materias_convalidadas_g = 0;
 
-        // Determinar estado: CONVALIDADO tiene prioridad
-        if ($es_convalidado) {
-            $estado_materia = 'CONVALIDADO';
-        } elseif ($nota >= 61) {
-            $estado_materia = 'APROBADO';
-        } else {
-            $estado_materia = 'REPROBADO';
+            foreach ($materias as $m) {
+                $fondo = ($fill) ? [255, 240, 240] : [255, 255, 255];
+                $pdf->SetFillColor($fondo[0], $fondo[1], $fondo[2]);
+                $pdf->SetTextColor(30);
+                $pdf->SetFont('Helvetica', '', 8);
+
+                $literal = strtoupper(trim($m['literal'] ?? ''));
+                $nota = (int)($m['TotalAnual'] ?? 0);
+                $es_convalidado = ($literal === 'CONVALIDADO');
+
+                if ($es_convalidado) {
+                    $estado_materia = 'CONVALIDADO';
+                    $materias_convalidadas_g++;
+                    $materias_aprobadas_g++;
+                } elseif ($nota >= 61) {
+                    $estado_materia = 'APROBADO';
+                    $materias_aprobadas_g++;
+                } else {
+                    $estado_materia = 'REPROBADO';
+                    $materias_reprobadas_g++;
+                }
+
+                $pdf->Cell(25, $h, textoPDF($m['cod_asignatura']), 1, 0, 'C', true);
+                $pdf->Cell(102, $h, textoPDF($m['materia_nombre']), 1, 0, 'L', true);
+
+                $pdf->SetFont('Helvetica', 'B', 8);
+                if ($es_convalidado) {
+                    $pdf->SetTextColor(0, 80, 150);
+                    $pdf->Cell(30, $h, 'CONVALIDADO', 1, 0, 'C', true);
+                } else {
+                    $pdf->SetTextColor(180, 0, 0);
+                    $pdf->Cell(30, $h, nota($nota), 1, 0, 'C', true);
+                }
+                $pdf->SetTextColor(30);
+
+                if ($estado_materia === 'CONVALIDADO') {
+                    $bg = [0, 80, 150];
+                } elseif ($estado_materia === 'APROBADO') {
+                    $bg = [180, 0, 0];
+                } else {
+                    $bg = [60, 0, 0];
+                }
+
+                $pdf->SetFillColor($bg[0], $bg[1], $bg[2]);
+                $pdf->SetTextColor(255, 255, 255);
+                $pdf->SetFont('Helvetica', 'B', 7.5);
+                $pdf->Cell(35, $h, textoPDF($estado_materia), 1, 1, 'C', true);
+
+                $fill = !$fill;
+            }
+
+            // Subtotal por gestión
+            $pdf->SetFont('Helvetica', 'I', 8);
+            $pdf->SetTextColor(80);
+            $subtotal_txt = "Subtotal Gestión $gestion: " . count($materias) . " materias";
+            if ($materias_convalidadas_g > 0) $subtotal_txt .= " | Convalidadas: $materias_convalidadas_g";
+            $subtotal_txt .= " | Aprobadas: $materias_aprobadas_g | Reprobadas: $materias_reprobadas_g";
+            $pdf->Cell(192, 5, textoPDF($subtotal_txt), 0, 1, 'R');
+
+            $pdf->Ln(4);
+
+            // Salto de página si es necesario
+            if ($pdf->GetY() + 40 > 250) {
+                $pdf->AddPage();
+            }
         }
-
-        $pdf->Cell(25, $h, textoPDF($m['cod_asignatura']), 1, 0, 'C', true);
-        $pdf->Cell(102, $h, textoPDF($m['materia_nombre']), 1, 0, 'L', true);
-
-        // Columna de nota
-        $pdf->SetFont('Helvetica', 'B', 8);
-        if ($es_convalidado) {
-            $pdf->SetTextColor(0, 80, 150); // Azul para convalidado
-            $pdf->Cell(30, $h, 'CONVALIDADO', 1, 0, 'C', true);
-        } else {
-            $pdf->SetTextColor(180, 0, 0); // Rojo para notas
-            $pdf->Cell(30, $h, nota($nota), 1, 0, 'C', true);
-        }
-        $pdf->SetTextColor(30);
-
-        // Badge de condición
-        if ($estado_materia === 'CONVALIDADO') {
-            $bg = [0, 80, 150];
-        } elseif ($estado_materia === 'APROBADO') {
-            $bg = [180, 0, 0];
-        } else {
-            $bg = [60, 0, 0];
-        }
-
-        $pdf->SetFillColor($bg[0], $bg[1], $bg[2]);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('Helvetica', 'B', 7.5);
-        $pdf->Cell(35, $h, textoPDF($estado_materia), 1, 1, 'C', true);
-
-        $fill = !$fill;
     }
-    $pdf->Ln(4);
+}
+// ---------- MODO GESTIÓN ESPECÍFICA ----------
+else {
+    foreach ($materias_por_anio as $key => $lista_materias) {
+        if (empty($lista_materias)) continue;
+        $hay_registros = true;
+
+        $pdf->SetFont('Helvetica', 'B', 9);
+        $pdf->SetFillColor(180, 0, 0);
+        $pdf->SetTextColor(255);
+        $pdf->Cell(192, 7, textoPDF('MATERIAS DE ' . $nombres_anios[$key]), 1, 1, 'L', true);
+
+        $pdf->SetFillColor(100, 0, 0);
+        $pdf->SetTextColor(255);
+        $pdf->SetFont('Helvetica', 'B', 8);
+        $pdf->Cell(25, $h, textoPDF('CODIGO'), 1, 0, 'C', true);
+        $pdf->Cell(102, $h, textoPDF('MATERIA / ASIGNATURA'), 1, 0, 'L', true);
+        $pdf->Cell(30, $h, textoPDF('NOTA ANUAL'), 1, 0, 'C', true);
+        $pdf->Cell(35, $h, textoPDF('CONDICION'), 1, 1, 'C', true);
+
+        $fill = false;
+        foreach ($lista_materias as $m) {
+            $fondo = ($fill) ? [255, 240, 240] : [255, 255, 255];
+            $pdf->SetFillColor($fondo[0], $fondo[1], $fondo[2]);
+            $pdf->SetTextColor(30);
+            $pdf->SetFont('Helvetica', '', 8);
+
+            $literal = strtoupper(trim($m['literal'] ?? ''));
+            $nota = (int)($m['TotalAnual'] ?? 0);
+            $es_convalidado = ($literal === 'CONVALIDADO');
+
+            if ($es_convalidado) {
+                $estado_materia = 'CONVALIDADO';
+            } elseif ($nota >= 61) {
+                $estado_materia = 'APROBADO';
+            } else {
+                $estado_materia = 'REPROBADO';
+            }
+
+            $pdf->Cell(25, $h, textoPDF($m['cod_asignatura']), 1, 0, 'C', true);
+            $pdf->Cell(102, $h, textoPDF($m['materia_nombre']), 1, 0, 'L', true);
+
+            $pdf->SetFont('Helvetica', 'B', 8);
+            if ($es_convalidado) {
+                $pdf->SetTextColor(0, 80, 150);
+                $pdf->Cell(30, $h, 'CONVALIDADO', 1, 0, 'C', true);
+            } else {
+                $pdf->SetTextColor(180, 0, 0);
+                $pdf->Cell(30, $h, nota($nota), 1, 0, 'C', true);
+            }
+            $pdf->SetTextColor(30);
+
+            if ($estado_materia === 'CONVALIDADO') {
+                $bg = [0, 80, 150];
+            } elseif ($estado_materia === 'APROBADO') {
+                $bg = [180, 0, 0];
+            } else {
+                $bg = [60, 0, 0];
+            }
+
+            $pdf->SetFillColor($bg[0], $bg[1], $bg[2]);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->SetFont('Helvetica', 'B', 7.5);
+            $pdf->Cell(35, $h, textoPDF($estado_materia), 1, 1, 'C', true);
+
+            $fill = !$fill;
+        }
+        $pdf->Ln(4);
+    }
 }
 
 if (!$hay_registros) {
     $pdf->SetFillColor(255, 240, 240);
     $pdf->SetTextColor(180, 0, 0);
     $pdf->SetFont('Helvetica', 'I', 9);
-    $pdf->Cell(192, 8, textoPDF('El estudiante no cuenta con materias registradas en esta gestion.'), 1, 1, 'C', true);
+    $mensaje = $modo_todas
+        ? 'El estudiante no cuenta con materias registradas en ninguna gestión.'
+        : 'El estudiante no cuenta con materias registradas en la gestión ' . $gestion_filtro . '.';
+    $pdf->Cell(192, 8, textoPDF($mensaje), 1, 1, 'C', true);
     $pdf->Ln(4);
 }
 
 // =====================================================
+// TIPO DE ESTUDIANTE
+// =====================================================
+$q_tipo_est = mysqli_query($conn, "SELECT tipo FROM inscripcion 
+                                    WHERE ci_est = '$ci' 
+                                    ORDER BY FIELD(tipo, 'BTH','Beca','Regular'), id DESC 
+                                    LIMIT 1");
+$row_tipo_est = $q_tipo_est ? mysqli_fetch_assoc($q_tipo_est) : null;
+$tipo_estudiante = strtoupper($row_tipo_est['tipo'] ?? 'REGULAR');
+
+// =====================================================
+// DETECTAR CASO ESPECIAL BTH
+// =====================================================
+$es_bth_convalidado = (
+    $tipo_estudiante === 'BTH'
+    && $total_materias > 0
+    && $convalidadas === $total_materias
+);
+
+$especialidades = [
+    'SIS-INF' => 'SISTEMAS INFORMÁTICOS',
+    'CON-ADM' => 'CONTADURÍA GENERAL',
+    'ELE-IND' => 'ELECTRICIDAD INDUSTRIAL',
+];
+$id_carrera_est = $est['id_carrera'] ?? 'SIS-INF';
+$especialidad = $especialidades[$id_carrera_est] ?? 'SISTEMAS INFORMÁTICOS';
+
+// =====================================================
 // EVALUACIÓN FINAL
 // =====================================================
-$eval = function_exists('evaluarCondicionEstudianteV2')
-    ? evaluarCondicionEstudianteV2($conn, $ci, $gestion_filtro)
-    : ['estado' => 'N/A', 'reprobadas' => $reprobadas];
-
-$estado_final = $eval['estado'];
-if ($estado_final == 'APROBADO') {
-    $global = 'APROBADO: Pasa al siguiente Nivel.';
-    $bg_glob = [180, 0, 0];
-} elseif ($estado_final == 'ARRASTRE_TURNO_DISTINTO') {
-    $global = 'ARRASTRE (' . $eval['reprobadas'] . ' materia/s): Inscribe materias reprobadas en Turno Distinto.';
-    $bg_glob = [200, 80, 0];
-} elseif ($estado_final == 'REPETIDOR_PARCIAL') {
-    $global = 'REPETIDOR: Repite materias reprobadas en Mismo Turno.';
-    $bg_glob = [120, 0, 0];
-} elseif ($estado_final == 'RETIRADO_REINICIO') {
-    $global = 'RETIRADO (Pérdida de Año): Reinicia el nivel desde cero.';
-    $bg_glob = [80, 0, 0];
+if ($es_bth_convalidado) {
+    $estado_final = 'CONVALIDADO_BTH';
+    $global = "Materias convalidadas en el marco de la Resolución Ministerial N° 0166/2025 (Reglamento de Transitabilidad), correspondientes al Título de Técnico Medio en la Especialidad de $especialidad, emitido por el Ministerio de Educación.";
+    $bg_glob = [0, 80, 150];
 } else {
-    $global = 'ESTADO EN PROCESO O SIN DEFINIR';
-    $bg_glob = [150, 50, 50];
+    // En modo "todas", evaluar la última gestión. En modo específico, la seleccionada
+    if ($modo_todas && !empty($datos_por_gestion)) {
+        $ultima_gestion = max(array_keys($datos_por_gestion));
+    } else {
+        $ultima_gestion = $gestion_filtro;
+    }
+
+    $eval = function_exists('evaluarCondicionEstudianteV2')
+        ? evaluarCondicionEstudianteV2($conn, $ci, $ultima_gestion)
+        : ['estado' => 'N/A', 'reprobadas' => $reprobadas];
+
+    $estado_final = $eval['estado'];
+
+    if ($estado_final == 'APROBADO') {
+        $global = 'APROBADO: Pasa al siguiente Nivel.';
+        $bg_glob = [180, 0, 0];
+    } elseif ($estado_final == 'ARRASTRE_TURNO_DISTINTO') {
+        $global = 'ARRASTRE (' . $eval['reprobadas'] . ' materia/s): Inscribe materias reprobadas en Turno Distinto.';
+        $bg_glob = [200, 80, 0];
+    } elseif ($estado_final == 'REPETIDOR_PARCIAL') {
+        $global = 'REPETIDOR: Repite materias reprobadas en Mismo Turno.';
+        $bg_glob = [120, 0, 0];
+    } elseif ($estado_final == 'RETIRADO_REINICIO') {
+        $global = 'RETIRADO (Pérdida de Año): Reinicia el nivel desde cero.';
+        $bg_glob = [80, 0, 0];
+    } else {
+        $global = 'ESTADO EN PROCESO O SIN DEFINIR';
+        $bg_glob = [150, 50, 50];
+    }
 }
 
-if ($pdf->GetY() + 30 > 250) $pdf->AddPage();
+// =====================================================
+// CAJA DE RESUMEN FINAL
+// =====================================================
+if ($pdf->GetY() + 45 > 250) $pdf->AddPage();
+
+$altura_caja = $es_bth_convalidado ? 36 : 24;
 $y = $pdf->GetY() + 2;
 
 $pdf->SetFillColor(255, 240, 240);
 $pdf->SetDrawColor(180, 0, 0);
 $pdf->SetLineWidth(0.4);
-$pdf->Rect(12, $y, 192, 24, 'DF');
+$pdf->Rect(12, $y, 192, $altura_caja, 'DF');
+
+$titulo_resumen = $modo_todas
+    ? 'RESUMEN ACADEMICO FINAL (TODAS LAS GESTIONES)'
+    : 'RESUMEN ACADEMICO FINAL (GESTIÓN ' . $gestion_filtro . ')';
 
 $pdf->SetXY(12, $y + 3);
 $pdf->SetTextColor(30);
 $pdf->SetFont('Helvetica', 'B', 8.5);
-$pdf->Cell(192, 5, textoPDF('RESUMEN ACADEMICO FINAL'), 0, 2, 'C');
+$pdf->Cell(192, 5, textoPDF($titulo_resumen), 0, 2, 'C');
 
 $pdf->SetFont('Helvetica', '', 8.5);
 $resumen_txt = "Total Materias: $total_materias | Aprobadas: $aprobadas | Reprobadas: $reprobadas";
@@ -364,11 +566,19 @@ if ($convalidadas > 0) {
 }
 $pdf->Cell(192, 5, textoPDF($resumen_txt), 0, 2, 'C');
 
-$pdf->SetXY(15, $y + 15);
-$pdf->SetFillColor($bg_glob[0], $bg_glob[1], $bg_glob[2]);
-$pdf->SetTextColor(255);
-$pdf->SetFont('Helvetica', 'B', 9);
-$pdf->Cell(186, 7, textoPDF($global), 1, 0, 'C', true);
+if ($es_bth_convalidado) {
+    $pdf->SetXY(15, $y + 15);
+    $pdf->SetFillColor($bg_glob[0], $bg_glob[1], $bg_glob[2]);
+    $pdf->SetTextColor(255);
+    $pdf->SetFont('Helvetica', 'B', 8);
+    $pdf->MultiCell(186, 5, textoPDF($global), 1, 'C', true);
+} else {
+    $pdf->SetXY(15, $y + 15);
+    $pdf->SetFillColor($bg_glob[0], $bg_glob[1], $bg_glob[2]);
+    $pdf->SetTextColor(255);
+    $pdf->SetFont('Helvetica', 'B', 9);
+    $pdf->Cell(186, 7, textoPDF($global), 1, 0, 'C', true);
+}
 
 if (ob_get_length()) {
     ob_end_clean();
