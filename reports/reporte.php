@@ -21,6 +21,14 @@ if (file_exists(__DIR__ . '/../lib/fpdf/fpdf.php')) {
 
 mysqli_set_charset($conn, 'utf8');
 
+// =====================================================
+// FUNCIÓN AUXILIAR PARA MOSTRAR NOTAS
+// =====================================================
+function verNotaPDF($val)
+{
+    return (isset($val) && $val !== '' && $val !== null) ? htmlspecialchars($val) : '-';
+}
+
 $ci_est = isset($_GET['ci']) ? trim($_GET['ci']) : '';
 
 if (empty($ci_est)) {
@@ -151,7 +159,6 @@ $modo_todas = ($gestion_filtro === null);
 // CONSULTA DE HISTORIAL (según modo)
 // =====================================================
 if ($modo_todas) {
-    // TODAS las gestiones
     $q_hist = "SELECT 
                     h.id AS hist_id,
                     i.gestion AS gestion,
@@ -174,7 +181,6 @@ if ($modo_todas) {
                  AND i.activo = 1
                ORDER BY i.gestion ASC, a.nivel ASC, a.codigo ASC";
 } else {
-    // Gestión específica
     $q_hist = "SELECT 
                     h.id AS hist_id,
                     i.gestion AS gestion,
@@ -203,8 +209,8 @@ $res_hist = mysqli_query($conn, $q_hist);
 // =====================================================
 // AGRUPAR DATOS
 // =====================================================
-$datos_por_gestion = []; // Para modo todas
-$materias_por_anio = ['1' => [], '2' => [], '3' => [], 'X' => []]; // Para gestión específica
+$datos_por_gestion = [];
+$materias_por_anio = ['1' => [], '2' => [], '3' => [], 'X' => []];
 
 $total_materias = 0;
 $aprobadas = 0;
@@ -279,7 +285,6 @@ $pdf->Cell(185, 5, textoPDF($nombreCompleto), 0, 2);
 $pdf->SetFont('Helvetica', '', 8.5);
 $pdf->Cell(185, 5, textoPDF('CI: ' . $est['ci'] . ' | Carrera: ' . ($est['carrera'] ?? 'Sin Asignar') . ' | Resolucion: ' . ($est['resolucion'] ?? '-')), 0, 2);
 
-// Mostrar gestión evaluada o "TODAS LAS GESTIONES"
 $texto_gestion = $modo_todas ? 'TODAS LAS GESTIONES' : $gestion_filtro;
 $pdf->Cell(185, 5, textoPDF('Gestion Evaluada: ' . $texto_gestion . ' | Nota minima de aprobacion: 61'), 0, 2);
 
@@ -292,6 +297,109 @@ $pdf->SetY(62);
 $h = 6;
 $hay_registros = false;
 
+// =====================================================
+// FUNCIÓN PARA DIBUJAR ENCABEZADO DE TABLA
+// =====================================================
+function dibujarEncabezadoTabla($pdf, $h)
+{
+    // Primera fila
+    $pdf->SetFillColor(100, 0, 0);
+    $pdf->SetTextColor(255);
+    $pdf->SetFont('Helvetica', 'B', 7);
+
+    $pdf->Cell(20, 5, textoPDF('CODIGO'), 1, 0, 'C', true);
+    $pdf->Cell(54, 5, textoPDF('MATERIA / ASIGNATURA'), 1, 0, 'L', true);
+    $pdf->Cell(48, 5, textoPDF('NOTAS BIMESTRALES'), 1, 0, 'C', true);
+    $pdf->Cell(14, 5, textoPDF('PARC'), 1, 0, 'C', true);
+    $pdf->Cell(14, 5, textoPDF('2DO T'), 1, 0, 'C', true);
+    $pdf->Cell(14, 5, textoPDF('TOTAL'), 1, 0, 'C', true);
+    $pdf->Cell(28, 5, textoPDF('CONDICION'), 1, 1, 'C', true);
+
+    // Segunda fila (subcolumnas)
+    $pdf->Cell(20, 5, '', 1, 0, 'C', true);
+    $pdf->Cell(54, 5, '', 1, 0, 'C', true);
+    $pdf->Cell(12, 5, textoPDF('1B'), 1, 0, 'C', true);
+    $pdf->Cell(12, 5, textoPDF('2B'), 1, 0, 'C', true);
+    $pdf->Cell(12, 5, textoPDF('3B'), 1, 0, 'C', true);
+    $pdf->Cell(12, 5, textoPDF('4B'), 1, 0, 'C', true);
+    $pdf->Cell(14, 5, '', 1, 0, 'C', true);
+    $pdf->Cell(14, 5, '', 1, 0, 'C', true);
+    $pdf->Cell(14, 5, '', 1, 0, 'C', true);
+    $pdf->Cell(28, 5, '', 1, 1, 'C', true);
+}
+
+// =====================================================
+// FUNCIÓN PARA DIBUJAR UNA FILA DE MATERIA
+// =====================================================
+function dibujarFilaMateria($pdf, $m, $h, $fill)
+{
+    $fondo = ($fill) ? [255, 240, 240] : [255, 255, 255];
+    $pdf->SetFillColor($fondo[0], $fondo[1], $fondo[2]);
+    $pdf->SetTextColor(30);
+    $pdf->SetFont('Helvetica', '', 7);
+
+    $literal = strtoupper(trim($m['literal'] ?? ''));
+    $nota = (int)($m['TotalAnual'] ?? 0);
+    $es_convalidado = ($literal === 'CONVALIDADO');
+
+    if ($es_convalidado) {
+        $estado_materia = 'CONVALIDADO';
+    } elseif ($nota >= 61) {
+        $estado_materia = 'APROBADO';
+    } else {
+        $estado_materia = 'REPROBADO';
+    }
+
+    // Código y materia
+    $pdf->Cell(20, $h, textoPDF($m['cod_asignatura']), 1, 0, 'C', true);
+    $pdf->Cell(54, $h, textoPDF($m['materia_nombre']), 1, 0, 'L', true);
+
+    // Notas bimestrales
+    if ($es_convalidado) {
+        $pdf->SetTextColor(0, 80, 150);
+        $pdf->SetFont('Helvetica', 'B', 6.5);
+        $pdf->Cell(48, $h, 'CONVALIDADO', 1, 0, 'C', true);
+        $pdf->SetFont('Helvetica', '', 7);
+        $pdf->SetTextColor(30);
+        $pdf->Cell(14, $h, '-', 1, 0, 'C', true);
+        $pdf->Cell(14, $h, '-', 1, 0, 'C', true);
+        $pdf->Cell(14, $h, '-', 1, 0, 'C', true);
+    } else {
+        $pdf->Cell(12, $h, verNotaPDF($m['nota_primerbim']), 1, 0, 'C', true);
+        $pdf->Cell(12, $h, verNotaPDF($m['nota_segundobim']), 1, 0, 'C', true);
+        $pdf->Cell(12, $h, verNotaPDF($m['nota_tercerbim']), 1, 0, 'C', true);
+        $pdf->Cell(12, $h, verNotaPDF($m['nota_cuartobim']), 1, 0, 'C', true);
+
+        // Nota parcial
+        $pdf->SetFont('Helvetica', 'B', 7);
+        $pdf->SetTextColor(0, 0, 180);
+        $pdf->Cell(14, $h, verNotaPDF($m['nota_parcial']), 1, 0, 'C', true);
+
+        // Segundo turno
+        $pdf->SetTextColor(200, 100, 0);
+        $pdf->Cell(14, $h, verNotaPDF($m['segundo_turno']), 1, 0, 'C', true);
+
+        // Total anual
+        $pdf->SetTextColor(180, 0, 0);
+        $pdf->Cell(14, $h, verNotaPDF($m['TotalAnual']), 1, 0, 'C', true);
+        $pdf->SetFont('Helvetica', '', 7);
+        $pdf->SetTextColor(30);
+    }
+
+    // Condición
+    if ($estado_materia === 'CONVALIDADO') {
+        $bg = [0, 80, 150];
+    } elseif ($estado_materia === 'APROBADO') {
+        $bg = [180, 0, 0];
+    } else {
+        $bg = [60, 0, 0];
+    }
+
+    $pdf->SetFillColor($bg[0], $bg[1], $bg[2]);
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetFont('Helvetica', 'B', 7);
+    $pdf->Cell(28, $h, textoPDF($estado_materia), 1, 1, 'C', true);
+}
 // =====================================================
 // RENDERIZAR TABLAS
 // =====================================================
@@ -309,13 +417,7 @@ if ($modo_todas) {
             $pdf->Cell(192, 8, textoPDF('GESTIÓN ' . $gestion), 1, 1, 'C', true);
 
             // Encabezado de columnas
-            $pdf->SetFillColor(100, 0, 0);
-            $pdf->SetTextColor(255);
-            $pdf->SetFont('Helvetica', 'B', 8);
-            $pdf->Cell(25, $h, textoPDF('CODIGO'), 1, 0, 'C', true);
-            $pdf->Cell(102, $h, textoPDF('MATERIA / ASIGNATURA'), 1, 0, 'L', true);
-            $pdf->Cell(30, $h, textoPDF('NOTA ANUAL'), 1, 0, 'C', true);
-            $pdf->Cell(35, $h, textoPDF('CONDICION'), 1, 1, 'C', true);
+            dibujarEncabezadoTabla($pdf, $h);
 
             $fill = false;
             $materias_aprobadas_g = 0;
@@ -323,53 +425,19 @@ if ($modo_todas) {
             $materias_convalidadas_g = 0;
 
             foreach ($materias as $m) {
-                $fondo = ($fill) ? [255, 240, 240] : [255, 255, 255];
-                $pdf->SetFillColor($fondo[0], $fondo[1], $fondo[2]);
-                $pdf->SetTextColor(30);
-                $pdf->SetFont('Helvetica', '', 8);
-
                 $literal = strtoupper(trim($m['literal'] ?? ''));
                 $nota = (int)($m['TotalAnual'] ?? 0);
-                $es_convalidado = ($literal === 'CONVALIDADO');
 
-                if ($es_convalidado) {
-                    $estado_materia = 'CONVALIDADO';
+                if ($literal === 'CONVALIDADO') {
                     $materias_convalidadas_g++;
                     $materias_aprobadas_g++;
                 } elseif ($nota >= 61) {
-                    $estado_materia = 'APROBADO';
                     $materias_aprobadas_g++;
                 } else {
-                    $estado_materia = 'REPROBADO';
                     $materias_reprobadas_g++;
                 }
 
-                $pdf->Cell(25, $h, textoPDF($m['cod_asignatura']), 1, 0, 'C', true);
-                $pdf->Cell(102, $h, textoPDF($m['materia_nombre']), 1, 0, 'L', true);
-
-                $pdf->SetFont('Helvetica', 'B', 8);
-                if ($es_convalidado) {
-                    $pdf->SetTextColor(0, 80, 150);
-                    $pdf->Cell(30, $h, 'CONVALIDADO', 1, 0, 'C', true);
-                } else {
-                    $pdf->SetTextColor(180, 0, 0);
-                    $pdf->Cell(30, $h, nota($nota), 1, 0, 'C', true);
-                }
-                $pdf->SetTextColor(30);
-
-                if ($estado_materia === 'CONVALIDADO') {
-                    $bg = [0, 80, 150];
-                } elseif ($estado_materia === 'APROBADO') {
-                    $bg = [180, 0, 0];
-                } else {
-                    $bg = [60, 0, 0];
-                }
-
-                $pdf->SetFillColor($bg[0], $bg[1], $bg[2]);
-                $pdf->SetTextColor(255, 255, 255);
-                $pdf->SetFont('Helvetica', 'B', 7.5);
-                $pdf->Cell(35, $h, textoPDF($estado_materia), 1, 1, 'C', true);
-
+                dibujarFilaMateria($pdf, $m, $h, $fill);
                 $fill = !$fill;
             }
 
@@ -401,59 +469,12 @@ else {
         $pdf->SetTextColor(255);
         $pdf->Cell(192, 7, textoPDF('MATERIAS DE ' . $nombres_anios[$key]), 1, 1, 'L', true);
 
-        $pdf->SetFillColor(100, 0, 0);
-        $pdf->SetTextColor(255);
-        $pdf->SetFont('Helvetica', 'B', 8);
-        $pdf->Cell(25, $h, textoPDF('CODIGO'), 1, 0, 'C', true);
-        $pdf->Cell(102, $h, textoPDF('MATERIA / ASIGNATURA'), 1, 0, 'L', true);
-        $pdf->Cell(30, $h, textoPDF('NOTA ANUAL'), 1, 0, 'C', true);
-        $pdf->Cell(35, $h, textoPDF('CONDICION'), 1, 1, 'C', true);
+        // Encabezado de columnas
+        dibujarEncabezadoTabla($pdf, $h);
 
         $fill = false;
         foreach ($lista_materias as $m) {
-            $fondo = ($fill) ? [255, 240, 240] : [255, 255, 255];
-            $pdf->SetFillColor($fondo[0], $fondo[1], $fondo[2]);
-            $pdf->SetTextColor(30);
-            $pdf->SetFont('Helvetica', '', 8);
-
-            $literal = strtoupper(trim($m['literal'] ?? ''));
-            $nota = (int)($m['TotalAnual'] ?? 0);
-            $es_convalidado = ($literal === 'CONVALIDADO');
-
-            if ($es_convalidado) {
-                $estado_materia = 'CONVALIDADO';
-            } elseif ($nota >= 61) {
-                $estado_materia = 'APROBADO';
-            } else {
-                $estado_materia = 'REPROBADO';
-            }
-
-            $pdf->Cell(25, $h, textoPDF($m['cod_asignatura']), 1, 0, 'C', true);
-            $pdf->Cell(102, $h, textoPDF($m['materia_nombre']), 1, 0, 'L', true);
-
-            $pdf->SetFont('Helvetica', 'B', 8);
-            if ($es_convalidado) {
-                $pdf->SetTextColor(0, 80, 150);
-                $pdf->Cell(30, $h, 'CONVALIDADO', 1, 0, 'C', true);
-            } else {
-                $pdf->SetTextColor(180, 0, 0);
-                $pdf->Cell(30, $h, nota($nota), 1, 0, 'C', true);
-            }
-            $pdf->SetTextColor(30);
-
-            if ($estado_materia === 'CONVALIDADO') {
-                $bg = [0, 80, 150];
-            } elseif ($estado_materia === 'APROBADO') {
-                $bg = [180, 0, 0];
-            } else {
-                $bg = [60, 0, 0];
-            }
-
-            $pdf->SetFillColor($bg[0], $bg[1], $bg[2]);
-            $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Helvetica', 'B', 7.5);
-            $pdf->Cell(35, $h, textoPDF($estado_materia), 1, 1, 'C', true);
-
+            dibujarFilaMateria($pdf, $m, $h, $fill);
             $fill = !$fill;
         }
         $pdf->Ln(4);
@@ -506,7 +527,6 @@ if ($es_bth_convalidado) {
     $global = "Materias convalidadas en el marco de la Resolución Ministerial N° 0166/2025 (Reglamento de Transitabilidad), correspondientes al Título de Técnico Medio en la Especialidad de $especialidad, emitido por el Ministerio de Educación.";
     $bg_glob = [0, 80, 150];
 } else {
-    // En modo "todas", evaluar la última gestión. En modo específico, la seleccionada
     if ($modo_todas && !empty($datos_por_gestion)) {
         $ultima_gestion = max(array_keys($datos_por_gestion));
     } else {

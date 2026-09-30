@@ -191,6 +191,7 @@ if ($total_materias > 0) {
                         <th colspan="3" class="th-bim">3er Bimestre</th>
                         <th colspan="3" class="th-bim">4to Bimestre</th>
                         <th rowspan="2" class="align-middle bg-dark text-white">Nota Parcial</th>
+                        <th rowspan="2" class="align-middle bg-dark text-white">2do. Turno</th>
                         <th rowspan="2" class="align-middle bg-dark text-white">Total Anual</th>
                         <th rowspan="2" class="align-middle bg-dark text-white">Literal</th>
                         <th rowspan="2" class="align-middle bg-dark text-white">Estado</th>
@@ -241,6 +242,9 @@ if ($total_materias > 0) {
                                 <td class="table-danger"><strong><?= verNota($i['nota_cuartobim']) ?></strong></td>
 
                                 <td class="fw-bold text-primary"><?= verNota($nota_parcial) ?></td>
+                                <td class="fw-bold" style="color: #fd7e14;">
+                                    <?= verNota($i['nota_segundo_turno'] ?? null) ?>
+                                </td>
 
                                 <td class="fs-6 fw-bold text-danger">
                                     <?= $es_convalidado ? 'CONVALIDADO' : verNota($total_anual) ?>
@@ -265,7 +269,7 @@ if ($total_materias > 0) {
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="18" class="text-center p-4">
+                            <td colspan="19" class="text-center p-4">
                                 <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
                                 No se encontraron inscripciones o notas registradas<?= $gestion_seleccionada ? ' para la gestión ' . htmlspecialchars($gestion_seleccionada) : '' ?>.
                             </td>

@@ -192,18 +192,23 @@
                         resultado.className = 'form-text';
 
                         switch (data.tipo) {
+                            // =====================================================
+                            // CASOS EXISTENTES
+                            // =====================================================
                             case 'no_registrado':
                                 resultado.innerHTML =
                                     '<div class="alerta-verde"><i class="bi bi-person-x-fill"></i>' +
                                     '<span><strong>Usuario NO registrado.</strong> Este CI no existe en el sistema ' +
                                     'como estudiante, docente, secretaria ni administrador.</span></div>';
                                 break;
+
                             case 'estudiante_no_inscrito':
                                 resultado.innerHTML =
                                     '<div class="alerta-verde"><i class="bi bi-exclamation-circle-fill"></i>' +
                                     '<span><strong>El estudiante no está inscrito:</strong> ' +
                                     data.nombre_completo + '</span></div>';
                                 break;
+
                             case 'estudiante_inscrito':
                                 resultado.className = 'form-text text-danger';
                                 resultado.innerHTML =
@@ -212,26 +217,79 @@
                                     ' <small>(' + data.tipo_inscripcion + ')</small><br>' +
                                     '<span class="text-muted">Usuario: <strong>' + ci + '</strong> | Contraseña: su CI</span>';
                                 break;
+
                             case 'docente':
                                 resultado.className = 'form-text text-primary';
                                 resultado.innerHTML =
                                     '<i class="bi bi-person-workspace"></i> <strong>Docente registrado:</strong> ' +
                                     data.nombre + ' — ingrese su contraseña.';
                                 break;
+
                             case 'secretaria':
                                 resultado.className = 'form-text text-primary';
                                 resultado.innerHTML =
                                     '<i class="bi bi-person-badge-fill"></i> <strong>Personal de Secretaría Académica</strong> — ingrese su contraseña.';
                                 break;
+
                             case 'admin':
                                 resultado.className = 'form-text text-primary';
                                 resultado.innerHTML =
                                     '<i class="bi bi-shield-lock-fill"></i> <strong>Administrador del sistema</strong> — ingrese su contraseña.';
                                 break;
+
+                            // =====================================================
+                            // NUEVOS ROLES
+                            // =====================================================
+                            case 'direccion_academica':
+                                resultado.className = 'form-text text-primary';
+                                resultado.innerHTML =
+                                    '<i class="bi bi-building-fill"></i> <strong>Dirección Académica</strong>' +
+                                    (data.nombre ? ': ' + data.nombre : '') +
+                                    ' — ingrese su contraseña.';
+                                break;
+
+                            case 'rector':
+                                resultado.className = 'form-text text-primary';
+                                resultado.innerHTML =
+                                    '<i class="bi bi-award-fill"></i> <strong>Rector</strong>' +
+                                    (data.nombre ? ': ' + data.nombre : '') +
+                                    ' — ingrese su contraseña.';
+                                break;
+
+                            case 'jefe_carrera':
+                                resultado.className = 'form-text text-primary';
+                                resultado.innerHTML =
+                                    '<i class="bi bi-person-video3"></i> <strong>Jefe de Carrera</strong>' +
+                                    (data.nombre ? ': ' + data.nombre : '') +
+                                    ' — ingrese su contraseña.';
+                                break;
+
+                            case 'super_admin':
+                                resultado.className = 'form-text text-primary';
+                                resultado.innerHTML =
+                                    '<i class="bi bi-shield-fill-check"></i> <strong>Super Administrador</strong>' +
+                                    (data.nombre ? ': ' + data.nombre : '') +
+                                    ' — ingrese su contraseña.';
+                                break;
+
+                            // =====================================================
+                            // CASO DESACTIVADO
+                            // =====================================================
                             case 'desactivado':
                                 resultado.className = 'form-text text-danger fw-bold';
                                 resultado.innerHTML =
-                                    '<i class="bi bi-x-circle-fill"></i> <strong>Cuenta Desactivada:</strong> Contacte con Dirección Académica.';
+                                    '<i class="bi bi-x-circle-fill"></i> <strong>Cuenta Desactivada:</strong> ' +
+                                    'Contacte con Dirección Académica o Soporte Técnico.';
+                                break;
+
+                            // =====================================================
+                            // CASO POR DEFECTO
+                            // =====================================================
+                            default:
+                                resultado.className = 'form-text text-muted';
+                                resultado.innerHTML =
+                                    '<i class="bi bi-question-circle-fill"></i> ' +
+                                    'Tipo de usuario no reconocido. Contacte a soporte.';
                                 break;
                         }
                     })
