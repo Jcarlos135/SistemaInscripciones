@@ -29,8 +29,10 @@ $bimestre = $bimestre ?? 1;
                     class="tab-link <?php echo ($vista === 'anual') ? 'active' : ''; ?>">
                     Vista Anual (Editable)
                 </a>
-                <a href="index.php?action=docente_dashboard" class="tab-link" style="margin-left: auto; background: transparent;">
-                    Volver a Materias
+                <a href="index.php?action=docente_dashboard"
+                    class="btn btn-secondary"
+                    style="margin-left: auto; background-color: #6c757d; border-color: #6c757d; color: #ffffff;">
+                    <i class="bi bi-arrow-left"></i> Volver
                 </a>
             </div>
 
@@ -40,112 +42,173 @@ $bimestre = $bimestre ?? 1;
                     <input type="hidden" name="cod_asig" value="<?php echo htmlspecialchars($cod_asig); ?>">
                     <h3 style="margin:0 0 15px 0; color:#2c3e50;">Resumen y Edición Anual de Calificaciones</h3>
 
+                    <!--  BUSCADOR POR CI -->
+                    <div class="card" style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <label for="buscadorCI" style="font-weight: 600; color: #2c3e50; margin: 0;">
+                                <i class="bi bi-search"></i> Buscar estudiante por CI:
+                            </label>
+                            <input type="text"
+                                id="buscadorCI"
+                                class="form-control"
+                                placeholder="Ej: 12345678"
+                                style="max-width: 250px; padding: 6px 12px;"
+                                oninput="filtrarPorCI(this.value)">
+                            <button type="button"
+                                class="btn btn-secondary btn-sm"
+                                onclick="limpiarBuscadorCI()"
+                                style="background-color: #6c757d; border-color: #6c757d; color: #fff;">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </button>
+                            <span id="contadorResultados" style="color: #6c757d; font-size: 13px; margin-left: auto;"></span>
+                        </div>
+                    </div>
+
                     <div class="leyenda" style="margin-bottom: 15px;">
                         <div class="leyenda-item"><strong>Nota mínima de aprobación: 61</strong></div>
                         <div class="leyenda-item">
-                            <div class="leyenda-color" style="background:#d1fae5;"></div> Aprobado (≥61)
+                            <div class="leyenda-color" style="background:#d1fae5;"></div>
+                            Aprobado (&ge;61)
                         </div>
                         <div class="leyenda-item">
-                            <div class="leyenda-color" style="background:#fee2e2;"></div> Reprobado (<61)< /div>
+                            <div class="leyenda-color" style="background:#fee2e2;"></div>
+                            Reprobado (&lt;61)
                         </div>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-color" style="background:#fee2e2;"></div> Reprobado (<61)
+                            </div>
 
-                        <div style="overflow-x: auto;">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2">C.I.</th>
-                                        <th rowspan="2" style="text-align: left; min-width: 150px;">Apellidos y Nombres</th>
-                                        <th colspan="3">1er Bim</th>
-                                        <th colspan="3">2do Bim</th>
-                                        <th colspan="3">3er Bim</th>
-                                        <th colspan="3">4to Bim</th>
-                                        <th rowspan="2">Parcial</th>
-                                        <th rowspan="2">Total Anual</th>
-                                        <th rowspan="2">Literal</th>
-                                        <th rowspan="2">Estado</th>
-                                        <th rowspan="2">2do Turno</th>
-                                        <th rowspan="2">Obs</th>
-                                    </tr>
-                                    <tr>
-                                        <th>T</th>
-                                        <th>P</th>
-                                        <th>Total</th>
-                                        <th>T</th>
-                                        <th>P</th>
-                                        <th>Total</th>
-                                        <th>T</th>
-                                        <th>P</th>
-                                        <th>Total</th>
-                                        <th>T</th>
-                                        <th>P</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (empty($estudiantes)): ?>
+                            <div style="overflow-x: auto;">
+                                <table>
+                                    <thead>
                                         <tr>
-                                            <td colspan="19" style="padding: 30px; color: #64748b;">No hay estudiantes activos inscritos.</td>
+                                            <th rowspan="2">C.I.</th>
+                                            <th rowspan="2" style="text-align: left; min-width: 150px;">Apellidos y Nombres</th>
+                                            <th colspan="3">1er Bim</th>
+                                            <th colspan="3">2do Bim</th>
+                                            <th colspan="3">3er Bim</th>
+                                            <th colspan="3">4to Bim</th>
+                                            <th rowspan="2">Parcial</th>
+                                            <th rowspan="2">2do Turno</th>
+                                            <th rowspan="2">Total Anual</th>
+                                            <th rowspan="2">Literal</th>
+                                            <th rowspan="2">Estado</th>
+
+                                            <th rowspan="2">Obs</th>
                                         </tr>
-                                    <?php else: ?>
-                                        <?php foreach ($estudiantes as $index => $est): ?>
-                                            <?php
-                                            $estado_actual = strtoupper(trim($est['estado'] ?? 'EN PROCESO'));
-                                            $es_segundo = isset($est['segundo_turno']) && $est['segundo_turno'] == 1;
-                                            $estado_class = 'estado-proceso';
-                                            if ($estado_actual === 'APROBADO') $estado_class = 'estado-aprobado';
-                                            elseif ($estado_actual === 'REPROBADO' && $es_segundo) $estado_class = 'estado-segundo';
-                                            elseif ($estado_actual === 'REPROBADO') $estado_class = 'estado-reprobado';
-                                            ?>
+                                        <tr>
+                                            <th>T</th>
+                                            <th>P</th>
+                                            <th>Total</th>
+                                            <th>T</th>
+                                            <th>P</th>
+                                            <th>Total</th>
+                                            <th>T</th>
+                                            <th>P</th>
+                                            <th>Total</th>
+                                            <th>T</th>
+                                            <th>P</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (empty($estudiantes)): ?>
                                             <tr>
-                                                <td>
-                                                    <?php echo htmlspecialchars($est['ci']); ?>
-                                                    <input type="hidden" name="ci_est[]" value="<?php echo htmlspecialchars($est['ci']); ?>">
-                                                </td>
-                                                <td style="text-align: left; font-weight: 500; font-size: 11px;">
-                                                    <?php echo htmlspecialchars($est['ap_pat'] . ' ' . $est['ap_mat'] . ', ' . $est['nombre']); ?>
-                                                </td>
-
-                                                <!-- Bimestre 1 -->
-                                                <td><input type="number" name="nota_teorico1[<?php echo $index; ?>]" class="input-nota t1" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_teorico1'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
-                                                <td><input type="number" name="nota_practico1[<?php echo $index; ?>]" class="input-nota p1" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_pract1'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
-                                                <td class="info-adicional"><strong class="total-bim-1"><?php echo htmlspecialchars($est['nota_primerbim'] ?? '-'); ?></strong></td>
-
-                                                <!-- Bimestre 2 -->
-                                                <td><input type="number" name="nota_teorico2[<?php echo $index; ?>]" class="input-nota t2" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_teorico2'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
-                                                <td><input type="number" name="nota_practico2[<?php echo $index; ?>]" class="input-nota p2" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_pract2'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
-                                                <td class="info-adicional"><strong class="total-bim-2"><?php echo htmlspecialchars($est['nota_segundobim'] ?? '-'); ?></strong></td>
-
-                                                <!-- Bimestre 3 -->
-                                                <td><input type="number" name="nota_teorico3[<?php echo $index; ?>]" class="input-nota t3" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_teorico3'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
-                                                <td><input type="number" name="nota_practico3[<?php echo $index; ?>]" class="input-nota p3" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_pract3'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
-                                                <td class="info-adicional"><strong class="total-bim-3"><?php echo htmlspecialchars($est['nota_tercerbim'] ?? '-'); ?></strong></td>
-
-                                                <!-- Bimestre 4 -->
-                                                <td><input type="number" name="nota_teorico4[<?php echo $index; ?>]" class="input-nota t4" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_teorico4'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
-                                                <td><input type="number" name="nota_practico4[<?php echo $index; ?>]" class="input-nota p4" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_pract4'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
-                                                <td class="info-adicional"><strong class="total-bim-4"><?php echo htmlspecialchars($est['nota_cuartobim'] ?? '-'); ?></strong></td>
-
-                                                <td class="info-adicional"><strong class="nota-parcial"><?php echo htmlspecialchars($est['nota_parcial'] ?? '-'); ?></strong></td>
-                                                <td class="info-adicional"><strong class="total-anual <?php echo ($est['TotalAnual'] !== null && (float)$est['TotalAnual'] < 61) ? 'nota-reprobado' : 'text-danger'; ?>"><?php echo htmlspecialchars($est['TotalAnual'] ?? '-'); ?></strong></td>
-                                                <td style="font-size: 9px;" class="literal-text"><?php echo htmlspecialchars($est['literal'] ?? '-'); ?></td>
-                                                <td><span class="estado-badge estado-dinamica-<?php echo $index; ?> <?php echo $estado_class; ?>"><?php echo $es_segundo && $estado_actual === 'REPROBADO' ? '2DO TURNO' : htmlspecialchars($estado_actual); ?></span></td>
-                                                <td><input type="checkbox" name="segundo_turno[]" value="<?php echo htmlspecialchars($est['ci']); ?>" class="checkbox-2turno" <?php echo $es_segundo ? 'checked' : ''; ?> onchange="recalcularFila(this)"></td>
-                                                <td><input type="text" name="observaciones[<?php echo $index; ?>]" class="input-obs" value="<?php echo htmlspecialchars($est['observaciones'] ?? ''); ?>"></td>
+                                                <td colspan="19" style="padding: 30px; color: #64748b;">No hay estudiantes activos inscritos.</td>
                                             </tr>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="btn-container">
-                            <button type="button" class="btn btn-secondary" onclick="window.location.href='index.php?action=docente_ver_estudiantes&cod_asig=<?php echo urlencode($cod_asig); ?>&vista=bimestre'">Volver a Vista Bimestral</button>
-                            <button type="submit" class="btn btn-danger">💾 Guardar Todas las Notas Anuales</button>
-                        </div>
+                                        <?php else: ?>
+                                            <?php foreach ($estudiantes as $index => $est): ?>
+                                                <?php
+                                                $estado_actual = strtoupper(trim($est['estado'] ?? 'EN PROCESO'));
+                                                $es_segundo = isset($est['segundo_turno']) && $est['segundo_turno'] == 1;
+                                                $estado_class = 'estado-proceso';
+                                                if ($estado_actual === 'APROBADO') $estado_class = 'estado-aprobado';
+                                                elseif ($estado_actual === 'REPROBADO' && $es_segundo) $estado_class = 'estado-segundo';
+                                                elseif ($estado_actual === 'REPROBADO') $estado_class = 'estado-reprobado';
+                                                ?>
+                                                <tr>
+                                                    <td>
+                                                        <?php echo htmlspecialchars($est['ci']); ?>
+                                                        <input type="hidden" name="ci_est[]" value="<?php echo htmlspecialchars($est['ci']); ?>">
+                                                    </td>
+                                                    <td style="text-align: left; font-weight: 500; font-size: 11px;">
+                                                        <?php echo htmlspecialchars($est['ap_pat'] . ' ' . $est['ap_mat'] . ', ' . $est['nombre']); ?>
+                                                    </td>
+
+                                                    <!-- Bimestre 1 -->
+                                                    <td><input type="number" name="nota_teorico1[<?php echo $index; ?>]" class="input-nota t1" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_teorico1'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
+                                                    <td><input type="number" name="nota_practico1[<?php echo $index; ?>]" class="input-nota p1" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_pract1'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
+                                                    <td class="info-adicional"><strong class="total-bim-1"><?php echo htmlspecialchars($est['nota_primerbim'] ?? '-'); ?></strong></td>
+
+                                                    <!-- Bimestre 2 -->
+                                                    <td><input type="number" name="nota_teorico2[<?php echo $index; ?>]" class="input-nota t2" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_teorico2'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
+                                                    <td><input type="number" name="nota_practico2[<?php echo $index; ?>]" class="input-nota p2" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_pract2'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
+                                                    <td class="info-adicional"><strong class="total-bim-2"><?php echo htmlspecialchars($est['nota_segundobim'] ?? '-'); ?></strong></td>
+
+                                                    <!-- Bimestre 3 -->
+                                                    <td><input type="number" name="nota_teorico3[<?php echo $index; ?>]" class="input-nota t3" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_teorico3'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
+                                                    <td><input type="number" name="nota_practico3[<?php echo $index; ?>]" class="input-nota p3" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_pract3'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
+                                                    <td class="info-adicional"><strong class="total-bim-3"><?php echo htmlspecialchars($est['nota_tercerbim'] ?? '-'); ?></strong></td>
+
+                                                    <!-- Bimestre 4 -->
+                                                    <td><input type="number" name="nota_teorico4[<?php echo $index; ?>]" class="input-nota t4" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_teorico4'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
+                                                    <td><input type="number" name="nota_practico4[<?php echo $index; ?>]" class="input-nota p4" min="0" max="100" value="<?php echo htmlspecialchars($est['nota_pract4'] ?? ''); ?>" oninput="recalcularFila(this)"></td>
+                                                    <td class="info-adicional"><strong class="total-bim-4"><?php echo htmlspecialchars($est['nota_cuartobim'] ?? '-'); ?></strong></td>
+
+                                                    <td class="info-adicional"><strong class="nota-parcial"><?php echo htmlspecialchars($est['nota_parcial'] ?? '-'); ?></strong></td>
+                                                    <td>
+                                                        <input type="number"
+                                                            name="segundo_turno[<?php echo $index; ?>]"
+                                                            class="input-nota nota-2turno"
+                                                            min="0" max="100"
+                                                            value="<?php echo (int)($est['segundo_turno'] ?? 0); ?>"
+                                                            oninput="recalcularFila(this)">
+                                                    </td>
+                                                    <td class="info-adicional"><strong class="total-anual <?php echo ($est['TotalAnual'] !== null && (float)$est['TotalAnual'] < 61) ? 'nota-reprobado' : 'text-danger'; ?>"><?php echo htmlspecialchars($est['TotalAnual'] ?? '-'); ?></strong></td>
+                                                    <td style="font-size: 9px;" class="literal-text"><?php echo htmlspecialchars($est['literal'] ?? '-'); ?></td>
+                                                    <td><span class="estado-badge estado-dinamica-<?php echo $index; ?> <?php echo $estado_class; ?>"><?php echo $es_segundo && $estado_actual === 'REPROBADO' ? '2DO TURNO' : htmlspecialchars($estado_actual); ?></span></td>
+
+                                                    <td><input type="text" name="observaciones[<?php echo $index; ?>]" class="input-obs" value="<?php echo htmlspecialchars($est['observaciones'] ?? ''); ?>"></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="btn-container">
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='index.php?action=docente_ver_estudiantes&cod_asig=<?php echo urlencode($cod_asig); ?>&vista=bimestre'">Volver a Vista Bimestral</button>
+                                <button type="submit" class="btn btn-danger">💾 Guardar Todas las Notas Anuales</button>
+                            </div>
                 </form>
 
             <?php else: ?>
                 <!-- VISTA BIMESTRAL -->
                 <h3 style="margin:0 0 20px 0; color:#2c3e50;">Registro de Calificaciones Bimestral</h3>
+                <!--  BUSCADOR POR CI (VISTA BIMESTRAL) -->
+                <div class="card" style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <label for="buscadorCIBim" style="font-weight: 600; color: #2c3e50; margin: 0;">
+                            <i class="bi bi-search"></i> Buscar estudiante por CI:
+                        </label>
+                        <input type="text"
+                            id="buscadorCIBim"
+                            class="form-control"
+                            placeholder="Ej: 12345678"
+                            style="max-width: 250px; padding: 6px 12px;"
+                            oninput="filtrarPorCIBim(this.value)">
+                        <button type="button"
+                            class="btn btn-secondary btn-sm"
+                            onclick="limpiarBuscadorCIBim()"
+                            style="background-color: #6c757d; border-color: #6c757d; color: #fff;">
+                            <i class="bi bi-x-circle"></i> Limpiar
+                        </button>
+                        <span id="contadorResultadosBim" style="color: #6c757d; font-size: 13px; margin-left: auto;"></span>
+                    </div>
+                </div>
+
+
+
                 <form id="formNotas" action="index.php?action=docente_guardar_notas" method="POST">
                     <input type="hidden" name="cod_asig" value="<?php echo htmlspecialchars($cod_asig); ?>">
                     <div class="grid-filters">
@@ -178,14 +241,14 @@ $bimestre = $bimestre ?? 1;
                                     <th style="width: 75px;">Práctico<br><small>(70%)</small></th>
                                     <th style="width: 70px;">Nota Bim.<br><small>(Preview)</small></th>
                                     <th style="width: 90px;">Estado</th>
-                                    <th style="width: 70px;">2do Turno</th>
+                                    <!--<th style="width: 70px;">2do Turno</th> -->
                                     <th style="min-width: 130px;">Observaciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($estudiantes)): ?>
                                     <tr>
-                                        <td colspan="8" style="padding: 30px; color: #64748b;">No hay estudiantes activos inscritos.</td>
+                                        <td colspan="7" style="padding: 30px; color: #64748b;">No hay estudiantes activos inscritos.</td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($estudiantes as $index => $est): ?>
@@ -196,7 +259,6 @@ $bimestre = $bimestre ?? 1;
                                             <td><input type="number" name="nota_practico[]" class="input-nota practico" min="0" max="100" value="<?php echo htmlspecialchars($est['practico'] ?? ''); ?>" placeholder="0" oninput="calcularNota(this, <?php echo $index; ?>)"></td>
                                             <td><span class="nota-final" id="nota_bim_<?php echo $index; ?>"><?php echo htmlspecialchars($est['nota_bim'] ?? '-'); ?></span></td>
                                             <td><span class="estado-badge estado-proceso" id="estado_<?php echo $index; ?>">EN PROCESO</span></td>
-                                            <td><input type="checkbox" name="segundo_turno[]" value="<?php echo htmlspecialchars($est['ci']); ?>" class="checkbox-2turno" <?php echo (isset($est['segundo_turno']) && $est['segundo_turno'] == 1) ? 'checked' : ''; ?>></td>
                                             <td><input type="text" name="observaciones[]" class="input-obs" value="<?php echo htmlspecialchars($est['observaciones'] ?? ''); ?>" placeholder="Opcional"></td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -333,18 +395,33 @@ $bimestre = $bimestre ?? 1;
             notaParcial = Math.round(bims.reduce((a, b) => a + b, 0) / bims.length);
         }
 
-        const esSegundo = row.querySelector('.checkbox-2turno').checked;
+        // Leer la NOTA del 2do turno (input numérico)
+        const input2Turno = row.querySelector('.nota-2turno');
+        const notaSegundo = (input2Turno && input2Turno.value !== '') ? parseInt(input2Turno.value) : 0;
 
         let totalAnual = null;
         let estado = 'EN PROCESO';
 
         if (notaParcial !== null) {
-            if (esSegundo && notaParcial < 61) {
-                totalAnual = 0;
-                estado = 'REPROBADO';
+            // NUEVA LÓGICA: segundo_turno es una NOTA
+            if (notaSegundo > 0) {
+                // El alumno fue a 2do turno
+                if (notaSegundo >= 61) {
+                    totalAnual = notaSegundo;
+                    estado = 'APROBADO';
+                } else {
+                    totalAnual = 0;
+                    estado = 'REPROBADO';
+                }
             } else {
-                totalAnual = notaParcial;
-                estado = (totalAnual >= 61) ? 'APROBADO' : 'REPROBADO';
+                // El alumno NO fue a 2do turno
+                if (notaParcial >= 61) {
+                    totalAnual = notaParcial;
+                    estado = 'APROBADO';
+                } else {
+                    totalAnual = 0;
+                    estado = 'REPROBADO';
+                }
             }
         }
 
@@ -363,10 +440,9 @@ $bimestre = $bimestre ?? 1;
         // Actualizar badge de estado
         const elEstado = row.querySelector('[class*="estado-dinamica-"]');
         if (elEstado) {
-            elEstado.textContent = estado === 'EN PROCESO' ? 'EN PROCESO' : (esSegundo && estado === 'REPROBADO' ? '2DO TURNO' : estado);
-            elEstado.className = elEstado.className.replace(/estado-\w+/g, '').trim(); // Limpiar clases de estado anteriores
+            elEstado.textContent = estado;
+            elEstado.className = elEstado.className.replace(/estado-\w+/g, '').trim();
             if (estado === 'APROBADO') elEstado.classList.add('estado-aprobado');
-            else if (estado === 'REPROBADO' && esSegundo) elEstado.classList.add('estado-segundo');
             else if (estado === 'REPROBADO') elEstado.classList.add('estado-reprobado');
             else elEstado.classList.add('estado-proceso');
         }
@@ -394,6 +470,111 @@ $bimestre = $bimestre ?? 1;
                 recalcularFila(input);
             }
         });
+    });
+    // ==========================================
+    // 🔍 BUSCADOR POR CI EN VISTA ANUAL
+    // ==========================================
+    function filtrarPorCI(valor) {
+        const busqueda = valor.trim().toLowerCase();
+        const filas = document.querySelectorAll('table tbody tr');
+        let visibles = 0;
+        let total = 0;
+
+        filas.forEach(fila => {
+            // Obtener el CI de la fila (primera celda)
+            const primeraCelda = fila.querySelector('td:first-child');
+            if (!primeraCelda) return;
+
+            const ci = primeraCelda.textContent.trim().toLowerCase();
+            total++;
+
+            if (busqueda === '' || ci.includes(busqueda)) {
+                fila.style.display = '';
+                visibles++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+
+        // Actualizar contador
+        const contador = document.getElementById('contadorResultados');
+        if (contador) {
+            if (busqueda === '') {
+                contador.textContent = `Mostrando ${total} estudiante${total !== 1 ? 's' : ''}`;
+            } else {
+                contador.textContent = `${visibles} de ${total} resultado${visibles !== 1 ? 's' : ''}`;
+            }
+        }
+    }
+
+    function limpiarBuscadorCI() {
+        const input = document.getElementById('buscadorCI');
+        if (input) {
+            input.value = '';
+            filtrarPorCI('');
+        }
+    }
+
+    // Ejecutar al cargar para mostrar el contador inicial
+    document.addEventListener('DOMContentLoaded', function() {
+        const buscador = document.getElementById('buscadorCI');
+        if (buscador) {
+            filtrarPorCI('');
+        }
+    });
+    // ==========================================
+    //  BUSCADOR POR CI EN VISTA BIMESTRAL
+    // ==========================================
+    function filtrarPorCIBim(valor) {
+        const busqueda = valor.trim().toLowerCase();
+
+        // Solo seleccionar filas de la tabla bimestral (formNotas)
+        const formBim = document.getElementById('formNotas');
+        if (!formBim) return;
+
+        const filas = formBim.querySelectorAll('table tbody tr');
+        let visibles = 0;
+        let total = 0;
+
+        filas.forEach(fila => {
+            const primeraCelda = fila.querySelector('td:first-child');
+            if (!primeraCelda) return;
+
+            const ci = primeraCelda.textContent.trim().toLowerCase();
+            total++;
+
+            if (busqueda === '' || ci.includes(busqueda)) {
+                fila.style.display = '';
+                visibles++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+
+        const contador = document.getElementById('contadorResultadosBim');
+        if (contador) {
+            if (busqueda === '') {
+                contador.textContent = `Mostrando ${total} estudiante${total !== 1 ? 's' : ''}`;
+            } else {
+                contador.textContent = `${visibles} de ${total} resultado${visibles !== 1 ? 's' : ''}`;
+            }
+        }
+    }
+
+    function limpiarBuscadorCIBim() {
+        const input = document.getElementById('buscadorCIBim');
+        if (input) {
+            input.value = '';
+            filtrarPorCIBim('');
+        }
+    }
+
+    // Ejecutar al cargar el contador inicial para la vista bimestral
+    document.addEventListener('DOMContentLoaded', function() {
+        const buscadorBim = document.getElementById('buscadorCIBim');
+        if (buscadorBim) {
+            filtrarPorCIBim('');
+        }
     });
 </script>
 

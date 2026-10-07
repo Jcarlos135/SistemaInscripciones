@@ -58,31 +58,30 @@ function obtener_docente_por_ci($conn, $ci, $solo_activos = false)
 
 function guardar_docente($conn, $ci, $nombre, $ap_pat, $ap_mat, $genero, $cel, $email)
 {
-    mysqli_begin_transaction($conn);
-    try {
-        $stmt = mysqli_prepare(
-            $conn,
-            "INSERT INTO docente (ci, nombre, ap_pat, ap_mat, genero, cel, email, id_rol, activo) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, 4, 1)"
-        );
-        mysqli_stmt_bind_param($stmt, 'sssssss', $ci, $nombre, $ap_pat, $ap_mat, $genero, $cel, $email);
-        mysqli_stmt_execute($stmt);
-
-        $clave = '123456';
-        $id_rol = 4;
-        $stmt2 = mysqli_prepare(
-            $conn,
-            "INSERT INTO usuario (usuario, clave, id_rol, activo) VALUES (?, ?, ?, 1)"
-        );
-        mysqli_stmt_bind_param($stmt2, 'ssi', $ci, $clave, $id_rol);
-        mysqli_stmt_execute($stmt2);
-
-        mysqli_commit($conn);
-        return true;
-    } catch (mysqli_sql_exception $e) {
-        mysqli_rollback($conn);
+    // Verificar que no exista el CI en docente
+    $ci_esc = mysqli_real_escape_string($conn, $ci);
+    $q_check = "SELECT ci FROM docente WHERE ci = '$ci_esc' LIMIT 1";
+    if (mysqli_num_rows(mysqli_query($conn, $q_check)) > 0) {
         return false;
     }
+
+    // Escapar datos
+    $ci_esc     = mysqli_real_escape_string($conn, $ci);
+    $nombre_esc = mysqli_real_escape_string($conn, strtoupper(trim($nombre)));
+    $ap_pat_esc = mysqli_real_escape_string($conn, strtoupper(trim($ap_pat)));
+    $ap_mat_esc = mysqli_real_escape_string($conn, strtoupper(trim($ap_mat)));
+    $genero_esc = mysqli_real_escape_string($conn, $genero);
+    $cel_esc    = mysqli_real_escape_string($conn, $cel);
+    $email_esc  = mysqli_real_escape_string($conn, $email);
+
+    // Insertar SOLO en docente. El trigger creará el usuario automáticamente.
+    $sql = "INSERT INTO docente 
+                (ci, nombre, ap_pat, ap_mat, genero, cel, email, id_rol, activo) 
+            VALUES 
+                ('$ci_esc', '$nombre_esc', '$ap_pat_esc', '$ap_mat_esc', 
+                 '$genero_esc', '$cel_esc', '$email_esc', 4, 1)";
+
+    return mysqli_query($conn, $sql);
 }
 
 // 2. Formatea las notas para el PDF (SIEMPRE ENTEROS, sin decimales)
@@ -657,7 +656,7 @@ function obtener_estudiantes_materia_bimestre($conn, $id_docente, $cod_asig, $bi
 
     return mysqli_query($conn, $query);
 }
-function guardar_notas_bimestre_docente($conn, $ci_est, $cod_asig, $id_docente, $bimestre, $teorico, $practico, $observaciones, $segundo_turno = 0)
+function guardar_notas_bimestre_docente($conn, $ci_est, $cod_asig, $id_docente, $bimestre, $teorico, $practico, $observaciones, $nota_segundo_turno = 0)
 {
     $ci_est = limpiar($conn, $ci_est);
     $cod_asig = limpiar($conn, $cod_asig);
@@ -665,7 +664,11 @@ function guardar_notas_bimestre_docente($conn, $ci_est, $cod_asig, $id_docente, 
     $bimestre = (int)$bimestre;
     $gestion = date('Y');
     $observaciones = limpiar($conn, $observaciones);
-    $segundo_turno = (int)$segundo_turno;
+
+    // NOTA del 2do turno (0-100)
+    $nota_segundo_turno = (int)$nota_segundo_turno;
+    if ($nota_segundo_turno < 0) $nota_segundo_turno = 0;
+    if ($nota_segundo_turno > 100) $nota_segundo_turno = 100;
 
     $teorico_val = ($teorico === '' || $teorico === null) ? 'NULL' : (int)$teorico;
     $practico_val = ($practico === '' || $practico === null) ? 'NULL' : (int)$practico;
@@ -706,48 +709,69 @@ function guardar_notas_bimestre_docente($conn, $ci_est, $cod_asig, $id_docente, 
                     $col_practico = $practico_val, 
                     $col_bim = $nota_bim_val, 
                     observaciones = '$observaciones',
-                    segundo_turno = $segundo_turno
+                    segundo_turno = $nota_segundo_turno
                   WHERE ci_est = '$ci_est' AND cod_asig = '$cod_asig' AND gestion = '$gestion' AND id_docente = $id_docente";
     } else {
         $query = "INSERT INTO historial (ci_est, cod_asig, id_docente, gestion, $col_teorico, $col_practico, $col_bim, observaciones, segundo_turno)
-                  VALUES ('$ci_est', '$cod_asig', $id_docente, '$gestion', $teorico_val, $practico_val, $nota_bim_val, '$observaciones', $segundo_turno)";
+                  VALUES ('$ci_est', '$cod_asig', $id_docente, '$gestion', $teorico_val, $practico_val, $nota_bim_val, '$observaciones', $nota_segundo_turno)";
     }
 
     $resultado = mysqli_query($conn, $query);
 
-    // RECALCULAR TOTALES Y ESTADO AUTOMÁTICAMENTE
+    // =====================================================
+    // RECALCULAR TOTALES con la NUEVA LÓGICA
+    // =====================================================
     if ($resultado) {
-        $fetch_current = mysqli_query($conn, "SELECT nota_primerbim, nota_segundobim, nota_tercerbim, nota_cuartobim, segundo_turno FROM historial WHERE ci_est = '$ci_est' AND cod_asig = '$cod_asig' AND gestion = '$gestion' LIMIT 1");
+        $fetch_current = mysqli_query($conn, "SELECT nota_primerbim, nota_segundobim, nota_tercerbim, nota_cuartobim, segundo_turno 
+                                              FROM historial 
+                                              WHERE ci_est = '$ci_est' AND cod_asig = '$cod_asig' AND gestion = '$gestion' 
+                                              LIMIT 1");
         $current = mysqli_fetch_assoc($fetch_current);
 
         if ($current) {
+            // 1. Calcular nota parcial (promedio de los bimestres con nota)
             $bims = [$current['nota_primerbim'], $current['nota_segundobim'], $current['nota_tercerbim'], $current['nota_cuartobim']];
             $valid_bims = array_filter($bims, function ($val) {
                 return $val !== null && $val !== '';
             });
 
-            // PROMEDIO REDONDEADO A ENTERO
             $nota_parcial_calc = count($valid_bims) > 0 ? (int)round(array_sum($valid_bims) / count($valid_bims)) : null;
 
-            // CALCULAR ESTADO FINAL BASADO EN TOTAL ANUAL (no en estado anterior)
-            $total_anual_calc = $nota_parcial_calc;
+            // 2. Leer la NOTA del segundo turno
+            $nota_segundo = (int)($current['segundo_turno'] ?? 0);
+
+            // 3. Calcular TotalAnual y Estado según la nueva lógica
+            $total_anual_calc = null;
             $estado_final = 'EN PROCESO';
 
-            if ($total_anual_calc !== null) {
-                if ($total_anual_calc >= 61) {
-                    $estado_final = 'APROBADO';
-                } else {
-                    $estado_final = 'REPROBADO';
-                }
+            if ($nota_parcial_calc !== null) {
 
-                // Si es segundo turno y reprobó, TotalAnual = 0
-                if ($current['segundo_turno'] == 1 && $estado_final === 'REPROBADO') {
-                    $total_anual_calc = 0;
+                // CASO 1: El alumno fue a 2do turno (nota_segundo > 0)
+                if ($nota_segundo > 0) {
+                    if ($nota_segundo >= 61) {
+                        $total_anual_calc = $nota_segundo;
+                        $estado_final = 'APROBADO';
+                    } else {
+                        $total_anual_calc = 0;
+                        $estado_final = 'REPROBADO';
+                    }
+                }
+                // CASO 2: El alumno NO fue a 2do turno
+                else {
+                    if ($nota_parcial_calc >= 61) {
+                        $total_anual_calc = $nota_parcial_calc;
+                        $estado_final = 'APROBADO';
+                    } else {
+                        $total_anual_calc = 0;
+                        $estado_final = 'REPROBADO';
+                    }
                 }
             }
 
+            // 4. Literal en texto
             $literal_texto = ($total_anual_calc !== null) ? numero_a_literal($total_anual_calc) : 'SIN NOTA';
 
+            // 5. Actualizar historial con los totales
             $update_totals = "UPDATE historial SET 
                               nota_parcial = " . ($nota_parcial_calc === null ? 'NULL' : $nota_parcial_calc) . ",
                               TotalAnual = " . ($total_anual_calc === null ? 'NULL' : $total_anual_calc) . ",

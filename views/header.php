@@ -30,18 +30,12 @@
                     <?php if (isset($_SESSION['usuario_id'])): ?>
 
                         <?php if ($_SESSION['rol_id'] == 1): ?>
-                            <li class="nav-item"><a class="nav-link" href="index.php?action=admin_dashboard"><i class="bi bi-person-gear me-1"></i> Administrador</a></li>
+
                         <?php elseif ($_SESSION['rol_id'] == 2): ?>
                             <li class="nav-item"><a class="nav-link" href="index.php?action=secretaria_dashboard"><i class="bi bi-journal-check me-1"></i> Secretaria</a></li>
                         <?php endif; ?>
 
-                        <?php if ($_SESSION['rol_id'] == 1 || $_SESSION['rol_id'] == 2): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="index.php?action=gestion_docentes">
-                                    <i class="bi bi-person-workspace"></i> Gestión de Docentes
-                                </a>
-                            </li>
-                        <?php endif; ?>
+
 
                         <?php if ($_SESSION['rol_id'] == 3): ?>
                             <li class="nav-item"><a class="nav-link" href="index.php?action=estudiante_dashboard">Mis Materias</a></li>

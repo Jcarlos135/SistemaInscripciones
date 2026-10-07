@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 30-09-2026 a las 13:16:11
+-- Tiempo de generación: 30-09-2026 a las 15:41:12
 -- Versión del servidor: 8.0.15
 -- Versión de PHP: 8.1.10
 
@@ -166,7 +166,44 @@ INSERT INTO `docente` (`id_docente`, `ci`, `nombre`, `ap_pat`, `ap_mat`, `genero
 (8, '5550008', 'ANGEL', 'RODRIGUEZ', 'FLORES', 'M', '70500008', 'arodriguez@instituto.edu', 4, 1),
 (9, '5550009', 'FREDY', 'CALSI NA', 'MENDOZA', 'M', '70500009', 'fcalsina@instituto.edu', 4, 1),
 (10, '5550010', 'PATRICIA', 'FERNANDEZ', 'ROJAS', 'F', '70500010', 'pfernandez@instituto.edu', 4, 1),
-(11, '5550011', 'ANTONIO', 'CONDORI', 'APAZA', 'M', '70500011', 'acondori@instituto.edu', 4, 1);
+(11, '5550011', 'ANTONIO', 'CONDORI', 'APAZA', 'M', '70500011', 'acondori@instituto.edu', 4, 1),
+(16, '5550012', 'MABEL', 'RODRIGUEZ', '', 'F', '70500012', 'direccion@ita.edu.bo', 5, 1),
+(17, '5550013', 'LUIS', 'FERNÁNDEZ', '', 'M', '70500013', 'lfernandez@ita.edu.bo', 6, 1),
+(18, '5550014', 'GROSBY', 'CAMPOS', '', 'M', '70500014', 'gcampos@ita.edu.bo', 7, 1),
+(19, '5550015', 'SUPER', 'ADMIN', '', 'M', '70500015', 'superadmin@ita.edu.bo', 8, 1);
+
+--
+-- Disparadores `docente`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_docente_after_insert` AFTER INSERT ON `docente` FOR EACH ROW BEGIN
+    IF NOT EXISTS (SELECT 1 FROM `usuario` WHERE `usuario` = NEW.ci) THEN
+        INSERT INTO `usuario` (`usuario`, `clave`, `id_rol`, `activo`)
+        VALUES (NEW.ci, '123456', NEW.id_rol, NEW.activo);
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_docente_after_update` AFTER UPDATE ON `docente` FOR EACH ROW BEGIN
+    IF OLD.ci <> NEW.ci THEN
+        UPDATE `usuario` SET `usuario` = NEW.ci WHERE `usuario` = OLD.ci;
+    END IF;
+
+    UPDATE `usuario`
+    SET `id_rol` = NEW.id_rol,
+        `activo` = NEW.activo
+    WHERE `usuario` = NEW.ci;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_docente_prevent_delete` BEFORE DELETE ON `docente` FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'No se permite eliminar docentes físicamente. Use UPDATE docente SET activo = 0 WHERE ci = ?';
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -1629,7 +1666,11 @@ INSERT INTO `rol` (`id`, `nombre`, `descripcion`, `activo`) VALUES
 (1, 'ADMIN', 'Administrador del sistema con acceso total', 1),
 (2, 'SECRETARIA', 'Secretaria académica, gestiona inscripciones', 1),
 (3, 'ESTUDIANTE', 'Estudiante, consulta y gestión de sus materias', 1),
-(4, 'DOCENTE', 'Docente, gestión de notas y materias asignadas', 1);
+(4, 'DOCENTE', 'Docente, gestión de notas y materias asignadas', 1),
+(5, 'DIRECCION_ACADEMICA', 'Dirección Académica, supervisa el cumplimiento académico y aprueba planes de estudio', 1),
+(6, 'RECTOR', 'Rector, máxima autoridad ejecutiva del instituto, supervisa todas las áreas', 1),
+(7, 'JEFE_CARRERA', 'Jefe de Carrera, gestiona docentes y materias de su carrera específica', 1),
+(8, 'SUPER_ADMIN', 'Super Administrador, acceso total al sistema incluyendo configuración y respaldos', 1);
 
 -- --------------------------------------------------------
 
@@ -1715,7 +1756,11 @@ INSERT INTO `usuario` (`id`, `usuario`, `clave`, `id_rol`, `activo`) VALUES
 (53, '61234574', '123456', 3, 1),
 (54, '62345671', '123456', 3, 1),
 (55, '62345672', '123456', 3, 1),
-(56, '62345673', '123456', 3, 1);
+(56, '62345673', '123456', 3, 1),
+(57, '5550012', '123456', 5, 1),
+(58, '5550013', '123456', 6, 1),
+(59, '5550014', '123456', 7, 1),
+(60, '5550015', '123456', 8, 1);
 
 --
 -- Índices para tablas volcadas
@@ -1828,7 +1873,7 @@ ALTER TABLE `asignacion_docente`
 -- AUTO_INCREMENT de la tabla `docente`
 --
 ALTER TABLE `docente`
-  MODIFY `id_docente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_docente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de la tabla `documentos_est`
@@ -1858,7 +1903,7 @@ ALTER TABLE `prerequisito`
 -- AUTO_INCREMENT de la tabla `rol`
 --
 ALTER TABLE `rol`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `secretaria`
@@ -1870,7 +1915,7 @@ ALTER TABLE `secretaria`
 -- AUTO_INCREMENT de la tabla `usuario`
 --
 ALTER TABLE `usuario`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- Restricciones para tablas volcadas

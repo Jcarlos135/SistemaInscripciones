@@ -10,18 +10,24 @@
     <?php unset($_SESSION['alerta']); ?>
 <?php endif; ?>
 
+<!-- Botón Volver al Panel Admin (encima de todo) -->
+<div class="mb-3 d-flex justify-content-end">
+    <a href="index.php?action=admin_dashboard&tab=docentes" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
 <div class="row g-4">
-    
+
     <!-- COLUMNA IZQUIERDA: FORMULARIOS -->
     <div class="col-lg-4">
-        
+
         <!-- Formulario de Registro -->
         <div class="card card-verde mb-4">
             <div class="card-header card-header-verde">
                 <h5 class="mb-0"><i class="bi bi-person-plus-fill"></i> Registrar Nuevo Docente</h5>
             </div>
             <div class="card-body">
-                <form action="index.php?action=registrar_docente" method="POST">
+                <form action="index.php?action=guardar_docente" method="POST">s
                     <div class="mb-3">
                         <label class="form-label fw-bold">Carnet (CI)</label>
                         <input type="text" class="form-control" name="ci" required maxlength="15" placeholder="Ej: 5550001">
@@ -74,9 +80,9 @@
                         <label class="form-label fw-bold">Seleccionar Docente</label>
                         <select class="form-select" name="id_docente" required>
                             <option value="">-- Seleccione --</option>
-                            <?php 
+                            <?php
                             $docentes = listar_docentes($conn);
-                            while ($d = mysqli_fetch_assoc($docentes)): 
+                            while ($d = mysqli_fetch_assoc($docentes)):
                             ?>
                                 <option value="<?= $d['id_docente'] ?>">
                                     <?= htmlspecialchars($d['nombre'] . ' ' . $d['ap_pat']) ?> (CI: <?= $d['ci'] ?>)
@@ -88,9 +94,9 @@
                         <label class="form-label fw-bold">Seleccionar Materia</label>
                         <select class="form-select" name="cod_asig" required>
                             <option value="">-- Seleccione --</option>
-                            <?php 
+                            <?php
                             $materias = mysqli_query($conn, "SELECT codigo, nombre FROM asignatura WHERE activo = 1 ORDER BY nombre");
-                            while ($m = mysqli_fetch_assoc($materias)): 
+                            while ($m = mysqli_fetch_assoc($materias)):
                             ?>
                                 <option value="<?= $m['codigo'] ?>">
                                     <?= htmlspecialchars($m['codigo'] . ' - ' . $m['nombre']) ?>
@@ -130,37 +136,37 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php 
+                            <?php
                             $lista_docentes = listar_docentes($conn);
                             if (mysqli_num_rows($lista_docentes) > 0):
-                                while ($doc = mysqli_fetch_assoc($lista_docentes)): 
+                                while ($doc = mysqli_fetch_assoc($lista_docentes)):
                             ?>
-                                <tr>
-                                    <td class="ps-4 fw-bold"><?= htmlspecialchars($doc['ci']) ?></td>
-                                    <td><?= htmlspecialchars($doc['nombre'] . ' ' . $doc['ap_pat'] . ' ' . $doc['ap_mat']) ?></td>
-                                    <td><?= htmlspecialchars($doc['cel']) ?></td>
-                                    <td><?= htmlspecialchars($doc['email']) ?></td>
-                                    <td class="text-end">
-    <div class="d-flex gap-1 justify-content-end">
-        <!-- Botón Materias -->
-        <a href="index.php?action=ver_materias_docente&id_docente=<?= $docente['id_docente'] ?>" 
-           class="btn btn-info btn-sm text-white">
-            <i class="bi bi-journal-bookmark-fill"></i> Materias
-        </a>
-        
-        <!-- Botón Dar de baja -->
-        <a href="index.php?action=dar_baja_docente&id_docente=<?= $docente['id_docente'] ?>" 
-           class="btn btn-danger btn-sm"
-           onclick="return confirm('¿Está seguro de realizar esta acción?');">
-            <i class="bi bi-trash-fill"></i> Dar de baja
-        </a>
-    </div>
-</td>
-                                </tr>
-                            <?php 
-                                endwhile; 
-                            else: 
-                            ?>
+                                    <tr>
+                                        <td class="ps-4 fw-bold"><?= htmlspecialchars($doc['ci']) ?></td>
+                                        <td><?= htmlspecialchars($doc['nombre'] . ' ' . $doc['ap_pat'] . ' ' . $doc['ap_mat']) ?></td>
+                                        <td><?= htmlspecialchars($doc['cel']) ?></td>
+                                        <td><?= htmlspecialchars($doc['email']) ?></td>
+                                        <td class="text-end">
+                                            <div class="d-flex gap-1 justify-content-end">
+                                                <!-- Botón Materias -->
+                                                <a href="index.php?action=ver_materias_docente&id_docente=<?= $doc['id_docente'] ?>"
+                                                    class="btn btn-info btn-sm text-white">
+                                                    <i class="bi bi-journal-bookmark-fill"></i> Materias
+                                                </a>
+
+                                                <!-- Botón Dar de baja -->
+                                                <a href="index.php?action=dar_baja_docente&id_docente=<?= $doc['id_docente'] ?>"
+                                                    class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('¿Está seguro de realizar esta acción?');">
+                                                    <i class="bi bi-trash-fill"></i> Dar de baja
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php
+                                endwhile;
+                            else:
+                                ?>
                                 <tr>
                                     <td colspan="5" class="text-center text-muted py-5">
                                         <i class="bi bi-inbox" style="font-size: 2.5rem;"></i><br>
